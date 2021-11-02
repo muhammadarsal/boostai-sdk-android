@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="avatar">Avatar</string>
+    <string name="image">Image</string>
+    <string name="vide">Video</string>
+    <string name="back">Back</string>
+    <string name="default_character_text">0 / 110</string>
+    <string name="chat_input_placeholder">Ask your question here</string>
+    <string name="settings">Settings</string>
+    <string name="close">Close</string>
+    <string name="minimize">Minimize</string>
+    <string name="filter">Filter</string>
+    <string name="boost_ai_logo">boost.ai logo</string>
+    <string name="conversation">Conversation</string>
+    <string name="powered_by">Powered by</string>
+    <string name="download_conversation">Download conversation</string>
+    <string name="delete_conversation">Delete conversation</string>
+    <string name="privacy_policy">Privacy policy</string>
+    <string name="thumbs_up">Thumbs up</string>
+    <string name="thumbs_down">Thumbs down</string>
+    <string name="upload_file">Upload file</string>
+    <string name="submit">Submit</string>
+    <string name="secure_chat">Secure chat</string>
+    <string name="external_link">External link</string>
+    <string name="do_you_want_to_give_me_feedback">Do you want to give me feedback?</string>
+    <string name="feedback_text_hint">Write in your feedback here</string>
+    <string name="unknown_error">An unknown error occurred.</string>
+    <string name="thanks_for_the_feedback">Thanks for the feedback.\nWe sincerely appreciate your insight, it helps us build a better customer experience.</string>
+</resources>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="App.ToolbarStyle" parent="ThemeOverlay.MaterialComponents.Toolbar.Primary">
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="actionMenuTextAppearance">@style/App.ToolbarMenuItem</item>
+    </style>
+
+    <style name="App.ToolbarMenuItem" parent="ThemeOverlay.MaterialComponents.Toolbar.Primary">
+        <item name="android:textSize">14sp</item>
+        <item name="textAllCaps">true</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="android:showAsAction">always|withText</item>
+    </style>
+
+</resources>

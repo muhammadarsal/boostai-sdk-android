@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/action_filter"
+        android:title="@string/filter"
+        app:showAsAction="always|withText">
+
+        <menu>
+            <item
+                android:id="@+id/filter_placeholder"
+                android:title="@string/filter" />
+        </menu>
+
+    </item>
+
+    <item
+        android:id="@+id/action_settings"
+        android:icon="@drawable/ic_question_mark_circle"
+        android:iconTint="@color/white"
+        android:title="@string/settings"
+        app:showAsAction="always"/>
+
+    <item
+        android:id="@+id/action_minimize"
+        android:icon="@drawable/ic_minimize"
+        android:iconTint="@color/white"
+        android:title="@string/minimize"
+        app:showAsAction="always"/>
+
+    <item
+        android:id="@+id/action_close"
+        android:icon="@drawable/ic_close"
+        android:iconTint="@color/white"
+        android:title="@string/close"
+        app:showAsAction="always"/>
+
+</menu>

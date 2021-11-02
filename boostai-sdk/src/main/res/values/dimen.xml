@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="settings_text_size">24sp</dimen>
+    <dimen name="settings_text_size_small">20sp</dimen>
+    <dimen name="settings_vertical_spacing">25sp</dimen>
+    <dimen name="chat_view_part_min_width">256dp</dimen>
+</resources>

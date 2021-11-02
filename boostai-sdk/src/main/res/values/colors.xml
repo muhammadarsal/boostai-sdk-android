@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="textColor">#000000</color>
+    <color name="white">#FFFFFF</color>
+    <color name="gray">#CCCCCC</color>
+    <color name="lightGray">#F6F6F6</color>
+    <color name="purple">#582C58</color>
+    <color name="consentApproveButtonBackgroundColor">#d0ecd6</color>
+    <color name="consentApproveButtonTextColor">#005000</color>
+    <color name="consentApproveButtonDisabledTextColor">#33005000</color>
+    <color name="consentDenyButtonBackgroundColor">#ffd4d5</color>
+    <color name="consentDenyButtonTextColor">#8c0303</color>
+    <color name="consentDenyButtonDisabledTextColor">#338c0303</color>
+</resources>

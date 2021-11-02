@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/purple"
+    android:paddingBottom="25dp"
+    android:paddingTop="25dp"
+    android:paddingStart="50dp"
+    android:paddingEnd="50dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:gravity="center">
+
+        <TextView
+            android:id="@+id/give_feedback"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/do_you_want_to_give_me_feedback"
+            android:textColor="@color/white"
+            android:gravity="center"
+            android:textSize="@dimen/settings_text_size"
+            android:layout_marginBottom="@dimen/settings_vertical_spacing"/>
+
+        <TextView
+            android:id="@+id/download_conversation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/download_conversation"
+            android:textColor="@color/white"
+            android:gravity="center"
+            android:textSize="@dimen/settings_text_size"
+            android:layout_marginBottom="@dimen/settings_vertical_spacing"/>
+
+        <TextView
+            android:id="@+id/delete_conversation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/delete_conversation"
+            android:textColor="@color/white"
+            android:gravity="center"
+            android:textSize="@dimen/settings_text_size"
+            android:layout_marginBottom="@dimen/settings_vertical_spacing"/>
+
+        <LinearLayout
+            android:id="@+id/privacy_policy"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginBottom="@dimen/settings_vertical_spacing"
+            tools:ignore="UseCompoundDrawables">
+
+            <TextView
+                android:id="@+id/privacy_policy_textview"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/privacy_policy"
+                android:textColor="@color/white"
+                android:gravity="center"
+                android:textSize="@dimen/settings_text_size" />
+
+            <ImageView
+                android:id="@+id/privacy_policy_imageview"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_external_link_icon"
+                android:contentDescription="@string/privacy_policy"
+                app:tint="@color/white"
+                android:layout_marginStart="15dp"/>
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/back"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/back"
+            android:textColor="@color/purple"
+            android:background="@drawable/settings_button_rounded"
+            android:gravity="center"
+            android:textSize="@dimen/settings_text_size_small"
+            android:padding="15dp"
+            android:paddingStart="50dp"
+            android:paddingEnd="50dp"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="15dp"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:orientation="vertical"
+        tools:ignore="UseCompoundDrawables">
+
+        <TextView
+            android:id="@+id/powered_by_textview"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="@string/powered_by"
+            android:textColor="@color/white" />
+
+        <ImageView
+            android:id="@+id/powered_by_imageview"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:src="@drawable/ic_boost_ai_logo_outline"
+            android:contentDescription="@string/boost_ai_logo"
+            app:tint="@color/white" />
+
+    </LinearLayout>
+
+</LinearLayout>

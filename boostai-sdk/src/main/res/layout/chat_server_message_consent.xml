@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="@dimen/chat_view_part_min_width"
+    android:layout_marginBottom="10dp"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal">
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/deny_button"
+        android:background="@drawable/rounded_alt"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:paddingHorizontal="15dp"
+        android:paddingVertical="9dp"
+        android:textAllCaps="false"
+        android:minHeight="0dp"
+        android:minWidth="0dp"
+        android:textSize="17sp"
+        android:textStyle="normal"/>
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/approve_button"
+        android:background="@drawable/rounded_alt"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:paddingHorizontal="15dp"
+        android:paddingVertical="9dp"
+        android:layout_marginStart="15dp"
+        android:textAllCaps="false"
+        android:minHeight="0dp"
+        android:minWidth="0dp"
+        android:textSize="17sp"
+        android:textStyle="normal"/>
+
+</LinearLayout>

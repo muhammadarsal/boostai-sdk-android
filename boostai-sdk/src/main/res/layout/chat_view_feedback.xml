@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/purple"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:paddingBottom="25dp"
+        android:paddingTop="25dp"
+        android:paddingStart="50dp"
+        android:paddingEnd="50dp">
+
+        <TextView
+            android:id="@+id/give_feedback"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/do_you_want_to_give_me_feedback"
+            android:textColor="@color/white"
+            android:gravity="center"
+            android:textSize="@dimen/settings_text_size"
+            android:layout_marginBottom="@dimen/settings_vertical_spacing"/>
+
+        <LinearLayout
+            android:id="@+id/feedback_buttons_wrapper"
+            android:layout_width="match_parent"
+            android:layout_height="70dp"
+            android:orientation="horizontal"
+            android:gravity="center_horizontal"
+            android:layout_marginBottom="@dimen/settings_vertical_spacing">
+
+            <ImageButton
+                android:id="@+id/thumbs_up"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:scaleType="fitXY"
+                android:src="@drawable/ic_thumbs_up"
+                android:contentDescription="@string/thumbs_up"
+                app:tint="@color/white"
+                android:background="@null"/>
+
+            <ImageButton
+                android:id="@+id/thumbs_down"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:scaleType="fitXY"
+                android:src="@drawable/ic_thumbs_down"
+                android:contentDescription="@string/thumbs_down"
+                app:tint="@color/white"
+                android:background="@null"
+                android:layout_marginTop="15dp"
+                android:layout_marginStart="50dp"/>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/feedback_input"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="end"
+            android:layout_marginBottom="@dimen/settings_vertical_spacing">
+
+            <EditText
+                android:id="@+id/feedback_edittext"
+                android:background="@color/white"
+                android:gravity="top|start"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:lines="4"
+                android:minLines="4"
+                android:padding="15sp"
+                android:inputType="textAutoCorrect|textMultiLine"
+                android:textColorHint="@color/textColor"
+                android:importantForAutofill="no" />
+
+            <ImageButton
+                android:id="@+id/submit_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_submit_text_icon"
+                android:contentDescription="@string/submit"
+                android:background="@null"
+                app:tint="@color/white"
+                android:layout_marginTop="25dp"/>
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/feedback_response"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/thanks_for_the_feedback"
+            android:textColor="@color/white"
+            android:gravity="center"
+            android:textSize="20sp"
+            android:layout_marginBottom="@dimen/settings_vertical_spacing"/>
+
+        <TextView
+            android:id="@+id/back"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/back"
+            android:textColor="@color/purple"
+            android:background="@drawable/settings_button_rounded"
+            android:gravity="center"
+            android:textSize="@dimen/settings_text_size_small"
+            android:padding="15dp"
+            android:paddingStart="50dp"
+            android:paddingEnd="50dp"/>
+
+    </LinearLayout>
+
+</ScrollView>
