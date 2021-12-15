@@ -13,7 +13,7 @@
         android:contentDescription="@string/avatar" />
 
     <LinearLayout
-        android:id="@+id/chat_server_message_parts"
+        android:id="@+id/chat_message_parts"
         android:layout_width="271dp"
         android:layout_height="wrap_content"
         android:orientation="vertical" />

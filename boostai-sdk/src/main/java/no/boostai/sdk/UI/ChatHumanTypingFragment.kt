@@ -32,17 +32,35 @@ import android.view.animation.AnimationUtils
 import androidx.fragment.app.Fragment
 import no.boostai.sdk.ChatBackend.ChatBackend
 import no.boostai.sdk.ChatBackend.Objects.ChatConfig
+import no.boostai.sdk.ChatBackend.Objects.ChatConfigDefaults
 import no.boostai.sdk.R
 
-open class ChatHumanTypingFragment (val customConfig: ChatConfig? = null) :
+open class ChatHumanTypingFragment (var customConfig: ChatConfig? = null) :
     Fragment(R.layout.chat_human_typing),
     ChatBackend.ConfigObserver {
+
+    val customConfigKey = "customConfig"
 
     lateinit var dotsWrapper: ViewGroup
     var dots = arrayOfNulls<View>(3)
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val bundle = savedInstanceState ?: arguments
+        bundle?.let {
+            customConfig = it.getParcelable(customConfigKey)
+        }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+
+        outState.putParcelable(customConfigKey, customConfig)
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
         dotsWrapper = view.findViewById(R.id.dots);
 
@@ -67,10 +85,10 @@ open class ChatHumanTypingFragment (val customConfig: ChatConfig? = null) :
 
     fun updateStyling(config: ChatConfig) {
         val backgroundColor = Color.parseColor(
-            customConfig?.serverMessageBackground ?: config.serverMessageBackground
+            customConfig?.serverMessageBackground ?: config.serverMessageBackground ?: ChatConfigDefaults.serverMessageBackground
         )
         val textColor = Color.parseColor(
-            customConfig?.serverMessageColor ?: config.serverMessageColor
+            customConfig?.serverMessageColor ?: config.serverMessageColor ?: ChatConfigDefaults.serverMessageColor
         )
 
         backgroundColor.let {

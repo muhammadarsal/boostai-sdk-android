@@ -36,13 +36,14 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import no.boostai.sdk.ChatBackend.ChatBackend
 import no.boostai.sdk.ChatBackend.Objects.ChatConfig
+import no.boostai.sdk.ChatBackend.Objects.ChatConfigDefaults
 import no.boostai.sdk.ChatBackend.Objects.FeedbackValue
 import no.boostai.sdk.R
 
 open class ChatViewFeedbackFragment(
-    val settingsDelegate: ChatViewSettingsDelegate?,
-    val isDialog: Boolean,
-    val customConfig: ChatConfig? = null
+    var settingsDelegate: ChatViewSettingsDelegate? = null,
+    var isDialog: Boolean = false,
+    var customConfig: ChatConfig? = null
 ) : Fragment(R.layout.chat_view_feedback),
     ChatBackend.ConfigObserver {
 
@@ -62,6 +63,27 @@ open class ChatViewFeedbackFragment(
         INITIAL,
         PROMPT_FOR_TEXT,
         COMPLETE
+    }
+
+    val settingsDelegateKey = "settingsDelegate"
+    val isDialogKey = "isDialog"
+    val customConfigKey = "customConfig"
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        val bundle = savedInstanceState ?: arguments
+        bundle?.let {
+            isDialog = it.getBoolean(isDialogKey)
+            customConfig = it.getParcelable(customConfigKey)
+        }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+
+        outState.putBoolean(isDialogKey, isDialog)
+        outState.putParcelable(customConfigKey, customConfig)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -179,7 +201,7 @@ open class ChatViewFeedbackFragment(
         )
 
         if (isDialog && settingsDelegate != null) {
-            settingsDelegate.closeChat()
+            settingsDelegate?.closeChat()
             return
         }
 
@@ -207,10 +229,10 @@ open class ChatViewFeedbackFragment(
         if (config == null) return
 
         val primaryColor = Color.parseColor(
-            customConfig?.primaryColor ?: config.primaryColor
+            customConfig?.primaryColor ?: config.primaryColor ?: ChatConfigDefaults.primaryColor
         )
         val contrastColor = Color.parseColor(
-            customConfig?.contrastColor ?: config.contrastColor
+            customConfig?.contrastColor ?: config.contrastColor ?: ChatConfigDefaults.contrastColor
         )
         val messages = config.messages?.get(ChatBackend.languageCode)
 

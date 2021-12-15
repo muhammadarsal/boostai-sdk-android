@@ -34,6 +34,7 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import no.boostai.sdk.ChatBackend.ChatBackend
 import no.boostai.sdk.ChatBackend.Objects.ChatConfig
+import no.boostai.sdk.ChatBackend.Objects.ChatConfigDefaults
 import no.boostai.sdk.ChatBackend.Objects.Response.Link
 import no.boostai.sdk.ChatBackend.Objects.Response.LinkType
 import no.boostai.sdk.R
@@ -44,10 +45,10 @@ import java.util.*
 import kotlin.concurrent.schedule
 
 open class ChatMessageButtonFragment(
-    val link: Link,
-    val idx: Int,
+    var link: Link? = null,
+    var idx: Int = 0,
     val animated: Boolean = true,
-    val customConfig: ChatConfig? = null
+    var customConfig: ChatConfig? = null
 ) : Fragment(R.layout.chat_server_message_button),
     ChatBackend.ConfigObserver,
     Animation.AnimationListener {
@@ -57,17 +58,40 @@ open class ChatMessageButtonFragment(
     lateinit var textView: TextView
     lateinit var imageView: ImageView
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    val linkKey = "link"
+    val idxKey = "idx"
+    val customConfigKey = "customConfig"
+
+    override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val bundle = savedInstanceState ?: arguments
+        bundle?.let {
+            link = it.getParcelable(linkKey)
+            idx = it.getInt(idxKey)
+            customConfig = it.getParcelable(customConfigKey)
+        }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+
+        outState.putParcelable(linkKey, link)
+        outState.putInt(idxKey, idx)
+        outState.putParcelable(customConfigKey, customConfig)
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
         textView = view.findViewById(R.id.chat_server_message_button_text)
         imageView = view.findViewById(R.id.chat_server_message_button_image_view)
 
-        val pace = ChatBackend.config?.pace ?: "normal"
+        val pace = ChatBackend.config?.pace ?: ChatConfigDefaults.pace
         val staggerDelay = TimingHelper.calculateStaggerDelay(pace = pace, idx = idx)
         val fragment = this
 
-        textView.text = link.text
+        textView.text = link?.text
         if (animated) {
             Timer().schedule(staggerDelay) {
                 view.alpha = 1.0f
@@ -82,17 +106,19 @@ open class ChatMessageButtonFragment(
         }
         else view.alpha = 1.0F
         view.setOnClickListener {
-            if (link.id == ACTION_LINK_UPLOAD) {
+            if (link?.id == ACTION_LINK_UPLOAD) {
                 Intent(Intent.ACTION_GET_CONTENT).let { intent ->
                     intent.setType("*/*")
                     startActivityForResult(intent, FILE_PICKER_REQUEST);
                 }
-            } else link.url?.let { url ->
+            } else link?.url?.let { url ->
                 Intent(Intent.ACTION_VIEW).let {
                     it.data = Uri.parse(url)
                     startActivity(it)
                 }
-            } ?: ChatBackend.actionButton(link.id)
+            } ?: link?.let {
+                ChatBackend.actionButton(it.id)
+            }
         }
         updateStyling(ChatBackend.config)
         ChatBackend.addConfigObserver(this)
@@ -123,15 +149,15 @@ open class ChatMessageButtonFragment(
         if (config == null) return
 
         val textColor = Color.parseColor(
-            customConfig?.linkBelowColor ?: config.linkBelowColor
+            customConfig?.linkBelowColor ?: config.linkBelowColor ?: ChatConfigDefaults.linkBelowColor
         )
         val backgroundColor = Color.parseColor(
-            customConfig?.linkBelowBackground ?: config.linkBelowBackground
+            customConfig?.linkBelowBackground ?: config.linkBelowBackground ?: ChatConfigDefaults.linkBelowBackground
         )
         val linkDrawable: Int
 
-        if (link.id == ACTION_LINK_UPLOAD) linkDrawable = R.drawable.ic_upload_files
-        else if (link.type == LinkType.external_link)
+        if (link?.id == ACTION_LINK_UPLOAD) linkDrawable = R.drawable.ic_upload_files
+        else if (link?.type == LinkType.external_link)
             linkDrawable = R.drawable.ic_external_link_icon
         else linkDrawable = R.drawable.ic_arrow_right
         textView.setTextColor(textColor)

@@ -27,11 +27,28 @@ import androidx.fragment.app.Fragment
 import com.bumptech.glide.Glide
 import no.boostai.sdk.R
 
-open class ChatMessageImageFragment(val url: String, val animated: Boolean = true) :
+open class ChatMessageImageFragment(var url: String? = null, val animated: Boolean = true) :
     Fragment(R.layout.chat_server_message_image) {
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    val urlKey = "url"
+
+    override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val bundle = savedInstanceState ?: arguments
+        bundle?.let {
+            url = it.getString(urlKey)
+        }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+
+        outState.putString(urlKey, url)
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
         if (animated)
             view.animation = AnimationUtils.loadAnimation(context, R.anim.chat_message_animate_in)

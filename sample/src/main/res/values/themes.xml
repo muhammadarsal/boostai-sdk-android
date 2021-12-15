@@ -17,8 +17,6 @@
     <!-- Tab layout styling -->
     <style name="AppTabLayout" parent="Widget.Design.TabLayout">
         <item name="tabIndicatorColor">@color/white</item>
-        <item name="tabBackground">@color/purple</item>
         <item name="tabTextColor">@color/white</item>
-        <item name="tabSelectedTextColor">@color/white</item>
     </style>
 </resources>

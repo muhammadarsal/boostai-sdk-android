@@ -28,28 +28,52 @@ import no.boostai.sdk.ChatBackend.Objects.Response.Link
 import no.boostai.sdk.R
 
 open class ChatMessageButtonsFragment(
-    val links: List<Link>,
+    var links: ArrayList<Link>? = null,
     val animated: Boolean = true,
-    val customConfig: ChatConfig? = null
+    var customConfig: ChatConfig? = null
 ) : Fragment(R.layout.chat_server_message_buttons) {
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    val linksKey = "links"
+    val customConfigKey = "customConfig"
+
+    override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val function = links.first().function
-
-        if (function == FunctionType.APPROVE || function == FunctionType.DENY)
-            childFragmentManager.beginTransaction()
-                .add(R.id.chat_message_buttons, getChatMessageConsentFragment(links))
-                .commitAllowingStateLoss()
-        else links.forEachIndexed { index, link ->
-            childFragmentManager.beginTransaction()
-                .add(R.id.chat_message_buttons, getChatMessageButtonFragment(link, index))
-                .commitAllowingStateLoss()
+        val bundle = savedInstanceState ?: arguments
+        bundle?.let {
+            links = it.getParcelableArrayList(linksKey)
+            customConfig = it.getParcelable(customConfigKey)
         }
     }
 
-    fun getChatMessageConsentFragment(links: List<Link>): Fragment =
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+
+        outState.putParcelableArrayList(linksKey, links)
+        outState.putParcelable(customConfigKey, customConfig)
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        if (savedInstanceState == null) {
+            links?.let { links ->
+                val function = links.first().function
+
+                if (function == FunctionType.APPROVE || function == FunctionType.DENY)
+                    childFragmentManager.beginTransaction()
+                        .add(R.id.chat_message_buttons, getChatMessageConsentFragment(links))
+                        .commitAllowingStateLoss()
+                else links.forEachIndexed { index, link ->
+                    childFragmentManager.beginTransaction()
+                        .add(R.id.chat_message_buttons, getChatMessageButtonFragment(link, index))
+                        .commitAllowingStateLoss()
+                }
+            }
+        }
+    }
+
+    fun getChatMessageConsentFragment(links: ArrayList<Link>): Fragment =
         ChatMessageConsentFragment(links, animated)
 
     fun getChatMessageButtonFragment(link: Link, index: Int): Fragment =

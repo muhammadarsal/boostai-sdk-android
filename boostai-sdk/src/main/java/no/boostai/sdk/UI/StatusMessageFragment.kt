@@ -26,8 +26,28 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import no.boostai.sdk.R
 
-open class StatusMessageFragment(val message: String, val isError: Boolean)
+open class StatusMessageFragment(var message: String? = null, var isError: Boolean = false)
     : Fragment(R.layout.status_message) {
+
+    val messageKey = "message"
+    val isErrorKey = "isError"
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        val bundle = savedInstanceState ?: arguments
+        bundle?.let {
+            message = it.getString(messageKey)
+            isError = it.getBoolean(isErrorKey)
+        }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+
+        outState.putString(messageKey, message)
+        outState.putBoolean(isErrorKey, isError)
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)

@@ -115,23 +115,44 @@ data class ConfigFilter (
 @Serializable
 @Parcelize
 data class ChatConfig (
-    var avatarStyle: String = "square",
-    var clientMessageBackground: String = "#ede5ed",
-    var clientMessageColor: String = "#363636",
-    var contrastColor: String = "#ffffff",
-    var fileUploadServiceEndpointUrl: String = "",
+    var avatarStyle: String? = null,
+    var clientMessageBackground: String? = null,
+    var clientMessageColor: String? = null,
+    var contrastColor: String? = null,
+    var fileUploadServiceEndpointUrl: String? = null,
     var filters: List<ConfigFilter>? = null,
-    var hasFilterSelector: Boolean = false,
-    var linkBelowBackground: String = "#552a55",
-    var linkBelowColor: String = "#ffffff",
-    var linkDisplayStyle: String = "below",
-    var primaryColor: String = "#552a55",
-    var requestConversationFeedback: Boolean = true,
-    var serverMessageBackground: String = "#f2f2f2",
-    var serverMessageColor: String = "#363636",
-    var spacingBottom: Int = 0,
-    var spacingRight: Int = 80,
-    var windowStyle: String = "rounded",
+    var hasFilterSelector: Boolean? = null,
+    var linkBelowBackground: String? = null,
+    var linkBelowColor: String? = null,
+    var linkDisplayStyle: String? = null,
+    var primaryColor: String? = null,
+    var requestConversationFeedback: Boolean? = false,
+    var serverMessageBackground: String? = null,
+    var serverMessageColor: String? = null,
+    var spacingBottom: Int? = null,
+    var spacingRight: Int? = null,
+    var windowStyle: String? = null,
     var pace: String? = null,
     var messages: Map<String, ConfigMessages>? = null
 ) : Parcelable
+
+class ChatConfigDefaults {
+    companion object {
+        val avatarStyle: String = "square"
+        val clientMessageBackground: String = "#ede5ed"
+        val clientMessageColor: String = "#363636"
+        val contrastColor: String = "#ffffff"
+        val hasFilterSelector: Boolean = false
+        val linkBelowBackground: String = "#552a55"
+        val linkBelowColor: String = "#ffffff"
+        val linkDisplayStyle: String = "below"
+        val primaryColor: String = "#552a55"
+        val requestConversationFeedback: Boolean = true
+        val serverMessageBackground: String = "#f2f2f2"
+        val serverMessageColor: String = "#363636"
+        val spacingBottom: Int = 0
+        val spacingRight: Int = 80
+        val windowStyle: String = "rounded"
+        val pace: String = "normal"
+    }
+}

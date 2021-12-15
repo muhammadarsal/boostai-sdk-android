@@ -29,14 +29,34 @@ import android.webkit.WebViewClient
 import androidx.fragment.app.Fragment
 import no.boostai.sdk.R
 
-open class ChatMessageVideoFragment(val source: String, val url: String) :
+open class ChatMessageVideoFragment(var source: String? = null, var url: String? = null) :
     Fragment(R.layout.chat_server_message_video) {
 
     var contentWebView: WebView? = null
 
+    val sourceKey = "source"
+    val urlKey = "url"
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        val bundle = savedInstanceState ?: arguments
+        bundle?.let {
+            source = it.getString(sourceKey)
+            url = it.getString(urlKey)
+        }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+
+        outState.putString(sourceKey, source)
+        outState.putString(urlKey, url)
+    }
+
     @SuppressLint("SetJavaScriptEnabled")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+        super.onViewCreated(view, savedInstanceState)
 
         contentWebView = view.findViewById(R.id.chat_server_message_webview)
 
@@ -46,14 +66,16 @@ open class ChatMessageVideoFragment(val source: String, val url: String) :
         contentWebView?.webViewClient = WebViewClient()
         contentWebView?.settings?.javaScriptEnabled = true
         view.animation = AnimationUtils.loadAnimation(context, R.anim.chat_message_animate_in)
-        when (source) {
-            "youtube" -> videoEmbedHTML = youTubeVideo(url)
-            "vimeo" -> videoEmbedHTML = vimeoVideo(url)
-            "wistia" -> videoEmbedHTML = wistiaVideo(url)
-        }
-        videoEmbedHTML?.let {
-            contentWebView?.loadData(it, "text/html; charset=UTF-8", null)
-            contentWebView?.visibility = View.VISIBLE
+        url?.let { url ->
+            when (source) {
+                "youtube" -> videoEmbedHTML = youTubeVideo(url)
+                "vimeo" -> videoEmbedHTML = vimeoVideo(url)
+                "wistia" -> videoEmbedHTML = wistiaVideo(url)
+            }
+            videoEmbedHTML?.let {
+                contentWebView?.loadData(it, "text/html; charset=UTF-8", null)
+                contentWebView?.visibility = View.VISIBLE
+            }
         }
     }
 

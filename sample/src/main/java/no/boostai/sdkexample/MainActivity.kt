@@ -19,6 +19,9 @@
 
 package no.boostai.sdkexample
 
+import android.content.res.ColorStateList
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
@@ -28,9 +31,10 @@ import androidx.fragment.app.FragmentPagerAdapter
 import androidx.viewpager.widget.ViewPager
 import com.google.android.material.tabs.TabLayout
 import no.boostai.sdk.ChatBackend.ChatBackend
+import no.boostai.sdk.ChatBackend.Objects.ChatConfig
 import no.boostai.sdk.UI.ChatViewFragment
 
-class MainActivity : AppCompatActivity(R.layout.activity_main) {
+class MainActivity : AppCompatActivity(R.layout.activity_main), ChatBackend.ConfigObserver {
 
     private var toolbar: Toolbar? = null
     private var viewPager: ViewPager? = null
@@ -43,6 +47,8 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
         viewPager = findViewById(R.id.view_pager)
         tabLayout = findViewById(R.id.tab_layout)
 
+        tabLayout?.background = ColorDrawable(getColor(R.color.purple))
+
         // Create viewPager adapter
         val adapter = ViewPagerAdapter(supportFragmentManager)
 
@@ -54,6 +60,15 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
         ChatBackend.languageCode =
             "no-NO" // Default value – will potentially be overridden by the backend config
         setSupportActionBar(toolbar)
+
+        updateStyling(ChatBackend.config)
+        ChatBackend.addConfigObserver(this)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+
+        ChatBackend.removeConfigObserver(this)
     }
 
     internal class ViewPagerAdapter(manager: FragmentManager) :
@@ -73,7 +88,29 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
         override fun getCount(): Int = fragments.size
 
         override fun getItem(position: Int): Fragment = fragments[position]
-
     }
+
+    private fun updateStyling(config: ChatConfig?) {
+        if (config == null) return
+
+        config.primaryColor?.let {
+            val primaryColorDrawable = ColorDrawable(Color.parseColor(it))
+            toolbar?.background = primaryColorDrawable
+            tabLayout?.background = primaryColorDrawable
+            viewPager?.background = primaryColorDrawable
+        }
+
+        config.contrastColor?.let {
+            val contrastColor = Color.parseColor(it)
+            tabLayout?.tabTextColors = ColorStateList.valueOf(contrastColor)
+            tabLayout?.setSelectedTabIndicatorColor(contrastColor)
+        }
+    }
+
+    override fun onConfigReceived(backend: ChatBackend, config: ChatConfig) {
+        updateStyling(config)
+    }
+
+    override fun onFailure(backend: ChatBackend, error: Exception) {}
 
 }

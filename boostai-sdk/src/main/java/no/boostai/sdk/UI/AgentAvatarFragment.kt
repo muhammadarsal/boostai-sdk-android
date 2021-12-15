@@ -28,11 +28,35 @@ import no.boostai.sdk.ChatBackend.Objects.ChatConfig
 import no.boostai.sdk.R
 
 open class AgentAvatarFragment(
-    val avatarImageResource: Int?,
-    val customConfig: ChatConfig? = null
+    var avatarImageResource: Int? = null,
+    var customConfig: ChatConfig? = null
 ) : Fragment(R.layout.agent_avatar_view) {
 
     lateinit var imageView: ImageView
+    val avatarImageResourceKey = "avatarImageResource"
+    val customConfigKey = "customConfig"
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        val bundle = savedInstanceState ?: arguments
+        bundle?.let {
+            avatarImageResource = avatarImageResource ?: it.getInt(avatarImageResourceKey)
+            customConfig = customConfig ?: it.getParcelable(customConfigKey)
+        }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+
+        avatarImageResource?.let {
+            outState.putInt(avatarImageResourceKey, it)
+        }
+
+        customConfig?.let {
+            outState.putParcelable(customConfigKey, it)
+        }
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)

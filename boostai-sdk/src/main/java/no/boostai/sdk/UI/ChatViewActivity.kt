@@ -67,6 +67,13 @@ open class ChatViewActivity: AppCompatActivity(R.layout.chat_view_activity), Cha
         updateStyling(ChatBackend.config)
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+
+        outState.putParcelable(CUSTOM_CONFIG, customConfig)
+        outState.putBoolean(IS_DIALOG, isDialog)
+    }
+
     override fun onDestroy() {
         super.onDestroy()
 

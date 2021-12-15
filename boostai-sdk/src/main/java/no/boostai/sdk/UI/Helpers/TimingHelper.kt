@@ -1,6 +1,7 @@
 package no.boostai.sdk.UI.Helpers
 
 import no.boostai.sdk.ChatBackend.ChatBackend
+import no.boostai.sdk.ChatBackend.Objects.ChatConfigDefaults
 
 object TimingHelper {
 
@@ -28,7 +29,7 @@ object TimingHelper {
     fun calcTimeToRead(pace: Double): Long = (defaultDelay / pace).toLong()
 
     fun timeUntilReveal(): Long {
-        val pace = ChatBackend.config?.pace ?: "normal"
+        val pace = ChatBackend.config?.pace ?: ChatConfigDefaults.pace
         val paceFactor = calculatePace(pace)
 
         return calcTimeToRead(paceFactor)

@@ -49,7 +49,7 @@ object ChatBackend {
         isLenient = true
     }
 
-    val client: OkHttpClient = OkHttpClient()
+    var client: OkHttpClient = OkHttpClient()
     var domain: String = ""
 
     /// The conversation Id. If you store this for later usage, you need to set this instead of calling start()
@@ -128,7 +128,6 @@ object ChatBackend {
             override fun handleResponse(body: String, listener: APIMessageResponseListener?) {
                 val parsedConfig = chatbackendJson.decodeFromString<ChatConfig>(body)
                 config = parsedConfig
-                println(parsedConfig)
 
                 Handler(Looper.getMainLooper()).post {
                     configReadyListener?.onReady(parsedConfig)
@@ -284,8 +283,6 @@ object ChatBackend {
             messages.add(apiMessage)
             publishResponse(apiMessage, null)
         } catch (e: SerializationException) {
-            println("Error creating text page")
-            println(e)
             publishResponse(null, e)
             return
         }
@@ -441,8 +438,6 @@ object ChatBackend {
     }
 
     fun post(data: JsonElement, url: URL? = null, listener: APIMessageResponseListener? = null, responseHandler: APIMessageResponseHandler? = null) {
-        println("body: " + data.toString())
-
         val request = Request.Builder()
             .url(url ?: getChatUrl())
             .method("POST", data.toString().toRequestBody())
@@ -460,8 +455,6 @@ object ChatBackend {
             override fun onResponse(call: Call, response: Response) {
                 try {
                     val body = response.body!!.string()
-                    println("Response:")
-                    println(body)
 
                     if (response.isSuccessful) {
                         if (responseHandler != null) {
@@ -563,7 +556,6 @@ object ChatBackend {
         }
 
         val b = formBuilder.build()
-        println(b.toString())
 
         val request = Request.Builder()
             .url(endpointURL)

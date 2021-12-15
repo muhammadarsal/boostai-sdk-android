@@ -19,6 +19,11 @@
 
 package no.boostai.sdk.ChatBackend.Objects.Response
 
+import android.os.Parcel
+import android.os.Parcelable
+import kotlinx.parcelize.Parceler
+import kotlinx.parcelize.Parcelize
+import kotlinx.parcelize.WriteWith
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Serializer
@@ -27,9 +32,9 @@ import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import no.boostai.sdk.ChatBackend.Objects.DateAsISO8601Serializer
-import java.lang.Exception
 import java.util.*
 
 /// Status of current chat
@@ -109,6 +114,7 @@ enum class FunctionType {
 Response from an interactive conversation
  */
 @Serializable
+@Parcelize
 data class Response (
     /// The id of the response
     val id: String,
@@ -137,16 +143,17 @@ data class Response (
     /// Change of van id
     @SerialName("van_id")
     val vanId: Int? = null
-)
+) : Parcelable
 
 @Serializable
+@Parcelize
 data class APIMessage (
     /// Conversation object
     val conversation: ConversationResult? = null,
     /// Response from an interactive conversation
     val response: Response? = null,
     /// List of historic `Response` objects
-    val responses: List<Response>? = null,
+    val responses: ArrayList<Response>? = null,
     /// Response from a SMARTREPLY call
     @SerialName("smart_reply")
     val smartReplies: SmartReply? = null,
@@ -154,39 +161,44 @@ data class APIMessage (
     val postedId: Int? = null,
     /// Extra variable to be used with the download command. You will get the result as a String in this variable
     var download: String? = null
-)
+) : Parcelable
 
 @Serializable
+@Parcelize
 data class Element (
     /// Element data
     val payload: Payload,
     /// The data type of the response
     val type: ElementType = ElementType.UNKNOWN
-)
+) : Parcelable
 
 /**
 Generic JSON card
  */
 @Serializable
-class GenericCard {
+@Parcelize
+class GenericCard : Parcelable {
 
     @Serializable
+    @Parcelize
     data class TextContent (
         val text: String
-    )
+    ) : Parcelable
 
     @Serializable
+    @Parcelize
     data class Image (
         val url: String?,
         val alt: String? = null,
         val position: String? = null,
-    )
+    ) : Parcelable
 
     @Serializable
+    @Parcelize
     data class Link (
         val text: String?,
         val url: String
-    )
+    ) : Parcelable
 
     val body: TextContent? = null
     val heading: TextContent? = null
@@ -196,32 +208,35 @@ class GenericCard {
 }
 
 @Serializable
+@Parcelize
 data class Payload (
     val html: String? = null,
     val text: String? = null,
     val url: String? = null,  // Video: youtube, vimeo, wistia
     val source: String? = null,
     val fullScreen: Boolean? = null,
-    val json: JsonElement? = null,
-    val links: List<Link>? = null
-)
+    val json: @WriteWith<JsonElementParceler> JsonElement? = null,
+    val links: ArrayList<Link>? = null
+) : Parcelable
 
 /**
 Conversation object
  */
 @Serializable
+@Parcelize
 data class ConversationResult (
     /// Identifies the conversation
     val id: String?,
     val reference: String?,
     /// Conversation state object
     val state: ConversationState
-)
+) : Parcelable
 
 /**
 Conversation state object
  */
 @Serializable
+@Parcelize
 data class ConversationState (
     /// One of `ChatStatus`
     @SerialName("chat_status")
@@ -254,9 +269,10 @@ data class ConversationState (
     ///Present when an upload file entity extraction has been triggered
     @SerialName("awaiting_files")
     val awaitingFiles: ConversationStateFiles? = null
-)
+) : Parcelable
 
 @Serializable
+@Parcelize
 data class Link (
     val id: String,
     val text: String,
@@ -270,33 +286,37 @@ data class Link (
     val vanName: String? = null,
     @SerialName("van_organization")
     val vanOrganization: String? = null
-)
+) : Parcelable
 
 @Serializable
+@Parcelize
 data class SmartReply (
     @SerialName("important_words") val importantWords: SmartReplySmartWords,
     val va: List<SmartReplyVa>
-)
+) : Parcelable
 
 @Serializable
+@Parcelize
 data class SmartReplyVa (
     val links: List<Link>,
     val messages: List<String>,
     val score: Int,
     val subTitle: String
-)
+) : Parcelable
 
 @Serializable
+@Parcelize
 data class SmartReplySmartWords (
     val original: List<String>,
     val processed: List<String>
-)
+) : Parcelable
 
 @Serializable
+@Parcelize
 data class ConversationStateFiles (
     @SerialName("accepted_types") val acceptedTypes: List<String>?,
     @SerialName("max_number_of_files") val maxNumberOfFiles: Int?
-)
+) : Parcelable
 
 
 @Serializable
@@ -311,4 +331,13 @@ class SDKException : Exception {
     constructor(message: String) : super(message)
     constructor(message: String, cause: Throwable) : super(message, cause)
     constructor(cause: Throwable) : super(cause)
+}
+
+object JsonElementParceler : Parceler<JsonElement?> {
+    override fun create(parcel: Parcel) =
+        Json.parseToJsonElement(parcel.readString().toString())
+
+    override fun JsonElement?.write(parcel: Parcel, flags: Int) =
+        parcel.writeString(toString())
+
 }

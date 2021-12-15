@@ -35,6 +35,7 @@ import androidx.core.graphics.drawable.DrawableCompat
 import androidx.fragment.app.Fragment
 import no.boostai.sdk.ChatBackend.ChatBackend
 import no.boostai.sdk.ChatBackend.Objects.ChatConfig
+import no.boostai.sdk.ChatBackend.Objects.ChatConfigDefaults
 import no.boostai.sdk.ChatBackend.Objects.Response.APIMessage
 import no.boostai.sdk.ChatBackend.Objects.Response.ChatStatus
 import no.boostai.sdk.ChatBackend.Objects.Response.Response
@@ -46,14 +47,24 @@ import kotlin.collections.ArrayList
 import kotlin.concurrent.schedule
 
 open class ChatViewFragment(
-    val isDialog: Boolean = false,
-    val customConfig: ChatConfig? = null,
-    val delegate: ChatViewFragmentDelegate? = null
+    var isDialog: Boolean = false,
+    var customConfig: ChatConfig? = null,
+    var delegate: ChatViewFragmentDelegate? = null
 ) :
     Fragment(R.layout.chat_view),
     ChatBackend.MessageObserver,
     ChatBackend.ConfigObserver,
     ChatViewSettingsDelegate {
+
+    val isDialogKey = "isDialog"
+    val customConfigKey = "customConfig"
+    val delegateKey = "delegate"
+    val lastAvatarUrlKey = "lastAvatarURL"
+    val maxCharacterCountKey = "maxCharacterCount"
+    val messagesKey = "messages"
+    val responsesKey = "responses"
+    val isBlockedKey = "isBlocked"
+    val isSecureChatKey = "isSecureChat"
     
     val errorId = "error"
     val settingsFragmentId = "settings"
@@ -75,8 +86,50 @@ open class ChatViewFragment(
     var isBlocked = false
     var isSecureChat = false
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val bundle = savedInstanceState ?: arguments
+        bundle?.let {
+            isDialog = it.getBoolean(isDialogKey)
+            customConfig = it.getParcelable(customConfigKey)
+            // TODO: Parcelable delegate?
+            // delegate =
+
+            lastAvatarURL = it.getString(lastAvatarUrlKey)
+            maxCharacterCount = it.getInt(maxCharacterCountKey)
+            messages = it.getParcelableArrayList(messagesKey) ?: ArrayList()
+            responses = it.getParcelableArrayList(responsesKey) ?: ArrayList()
+            isBlocked = it.getBoolean(isBlockedKey)
+            isSecureChat = it.getBoolean(isSecureChatKey)
+        }
+
+        ChatBackend.addConfigObserver(this)
+        ChatBackend.addMessageObserver(this)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+
+        ChatBackend.removeConfigObserver(this)
+        ChatBackend.removeMessageObserver(this)
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+
+        outState.putBoolean(isDialogKey, isDialog)
+        outState.putParcelable(customConfigKey, customConfig)
+        outState.putString(lastAvatarUrlKey, lastAvatarURL)
+        outState.putInt(maxCharacterCountKey, maxCharacterCount)
+        outState.putParcelableArrayList(messagesKey, messages)
+        outState.putParcelableArrayList(responsesKey, responses)
+        outState.putBoolean(isBlockedKey, isBlocked)
+        outState.putBoolean(isSecureChatKey, isSecureChat)
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
         chatContent = view.findViewById(R.id.chat_content)
         secureChatWrapper = view.findViewById(R.id.secure_chat_wrapper)
@@ -136,27 +189,19 @@ open class ChatViewFragment(
 
             if (text.isNotEmpty()) submitText(text)
         }
+
         // Set up menu
         setHasOptionsMenu(true)
-        ChatBackend.addConfigObserver(this)
-        ChatBackend.addMessageObserver(this)
-        ChatBackend.onReady(object : ChatBackend.ConfigReadyListener {
 
+        // Set up listener
+        ChatBackend.onReady(object : ChatBackend.ConfigReadyListener {
             override fun onFailure(exception: Exception) {}
 
             override fun onReady(config: ChatConfig) {
                 updateStyling(config)
                 startConversation()
             }
-
         })
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-
-        ChatBackend.removeConfigObserver(this)
-        ChatBackend.removeMessageObserver(this)
     }
 
     fun startConversation() {
@@ -329,7 +374,7 @@ open class ChatViewFragment(
                 )
                 .commitAllowingStateLoss()
             if (animated) {
-                val pace = ChatBackend.config?.pace ?: "normal"
+                val pace = ChatBackend.config?.pace ?: ChatConfigDefaults.pace
                 val paceFactor = TimingHelper.calculatePace(pace)
                 val staggerDelay = TimingHelper.calculateStaggerDelay(pace, 1)
                 val timeUntilReveal = TimingHelper.calcTimeToRead(paceFactor)
@@ -453,6 +498,8 @@ open class ChatViewFragment(
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        menu.clear()
+
         inflater.inflate(R.menu.chat_toolbar_menu, menu)
 
         val tintColorString = customConfig?.contrastColor ?: ChatBackend.config?.contrastColor
@@ -495,6 +542,8 @@ open class ChatViewFragment(
 
         minimizeItem.isVisible = isDialog
         closeItem.isVisible = isDialog
+
+        super.onCreateOptionsMenu(menu, inflater)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -612,7 +661,8 @@ open class ChatViewFragment(
             source == SourceType.client
         }.isNotEmpty()
 
-        if (ChatBackend.config?.requestConversationFeedback == true && hasClientMessages)
+        val requestConversationFeedback = ChatBackend.config?.requestConversationFeedback ?: ChatConfigDefaults.requestConversationFeedback
+        if (requestConversationFeedback && hasClientMessages)
             showFeedback()
         else
             // If all else fails, close the window

@@ -26,33 +26,66 @@ import android.net.Uri
 import android.os.Bundle
 import android.text.Html
 import android.view.View
-import android.view.animation.AnimationUtils
+import android.widget.FrameLayout
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import no.boostai.sdk.ChatBackend.ChatBackend
 import no.boostai.sdk.ChatBackend.Objects.ChatConfig
+import no.boostai.sdk.ChatBackend.Objects.ChatConfigDefaults
 import no.boostai.sdk.R
 import no.boostai.sdk.UI.Helpers.handleUrlClicks
 import no.boostai.sdk.UI.Helpers.trimTrailingWhitespace
 
 open class ChatMessageTextFragment(
-    val text: String,
-    val isHtml: Boolean,
-    val isClient: Boolean,
+    var text: String? = null,
+    var isHtml: Boolean = false,
+    var isClient: Boolean = false,
     val animated: Boolean = true,
-    val customConfig: ChatConfig? = null
-) : Fragment(
-        if (isClient) R.layout.chat_client_message_text_fragment
-        else R.layout.chat_server_message_text_fragment
-    ),
+    var customConfig: ChatConfig? = null
+) : Fragment(R.layout.chat_message_text_fragment),
     ChatBackend.ConfigObserver {
 
+    val textKey = "text"
+    val isHtmlKey = "isHtml"
+    val isClientKey = "isClient"
+    val customConfigKey = "customConfig"
+
     lateinit var textView: TextView
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        val bundle = savedInstanceState ?: arguments
+        bundle?.let {
+            text = it.getString(textKey)
+            isHtml = it.getBoolean(isHtmlKey)
+            isClient = it.getBoolean(isClientKey)
+            customConfig = it.getParcelable(customConfigKey)
+        }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+
+        outState.putString(textKey, text)
+        outState.putBoolean(isHtmlKey, isHtml)
+        outState.putBoolean(isClientKey, isClient)
+        outState.putParcelable(customConfigKey, customConfig)
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         textView = view.findViewById(R.id.chat_message_textview)
+
+        if (isClient) {
+            view.background = ContextCompat.getDrawable(requireContext(), R.drawable.semi_rounded_alt)
+
+            val layoutParams = view.layoutParams as FrameLayout.LayoutParams
+            layoutParams.bottomMargin = 0
+            view.layoutParams = layoutParams
+        }
 
         if (isHtml) {
             val content: CharSequence = Html.fromHtml(text, Html.FROM_HTML_MODE_LEGACY)
@@ -70,8 +103,9 @@ open class ChatMessageTextFragment(
                     }
             }
         } else textView.text = text
-        if (animated)
-            view.animation = AnimationUtils.loadAnimation(context, R.anim.chat_message_animate_in)
+        /*if (animated)
+            view.animation = AnimationUtils.loadAnimation(context, R.anim.chat_message_animate_in)*/
+
         updateStyling(ChatBackend.config)
         ChatBackend.addConfigObserver(this)
     }
@@ -90,17 +124,17 @@ open class ChatMessageTextFragment(
 
         if (isClient) {
             backgroundColor = Color.parseColor(
-                customConfig?.clientMessageBackground ?: config.clientMessageBackground
+                customConfig?.clientMessageBackground ?: config.clientMessageBackground ?: ChatConfigDefaults.clientMessageBackground
             )
             textColor = Color.parseColor(
-                customConfig?.clientMessageColor ?: config.clientMessageColor
+                customConfig?.clientMessageColor ?: config.clientMessageColor ?: ChatConfigDefaults.clientMessageColor
             )
         } else {
             backgroundColor = Color.parseColor(
-                customConfig?.serverMessageBackground ?: config.serverMessageBackground
+                customConfig?.serverMessageBackground ?: config.serverMessageBackground ?: ChatConfigDefaults.serverMessageBackground
             )
             textColor = Color.parseColor(
-                customConfig?.serverMessageColor ?: config.serverMessageColor
+                customConfig?.serverMessageColor ?: config.serverMessageColor ?: ChatConfigDefaults.serverMessageColor
             )
         }
 

@@ -27,6 +27,7 @@ import android.widget.Button
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import no.boostai.sdk.ChatBackend.ChatBackend
+import no.boostai.sdk.ChatBackend.Objects.ChatConfigDefaults
 import no.boostai.sdk.ChatBackend.Objects.Response.FunctionType
 import no.boostai.sdk.ChatBackend.Objects.Response.Link
 import no.boostai.sdk.R
@@ -35,21 +36,38 @@ import java.util.*
 import kotlin.concurrent.schedule
 
 open class ChatMessageConsentFragment(
-    val links: List<Link>,
+    var links: ArrayList<Link>? = null,
     val animated: Boolean = true
 ) : Fragment(R.layout.chat_server_message_consent) {
 
     lateinit var approveButton: Button
     lateinit var denyButton: Button
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    val linksKey = "links"
+
+    override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val bundle = savedInstanceState ?: arguments
+        bundle?.let {
+            links = it.getParcelableArrayList(linksKey)
+        }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+
+        outState.putParcelableArrayList(linksKey, links)
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
         approveButton = view.findViewById(R.id.approve_button)
         denyButton = view.findViewById(R.id.deny_button)
 
         if (animated) {
-            val pace = ChatBackend.config?.pace ?: "normal"
+            val pace = ChatBackend.config?.pace ?: ChatConfigDefaults.pace
             val staggerDelay = TimingHelper.calculateStaggerDelay(pace = pace, idx = 0)
 
             Timer().schedule(staggerDelay) {
@@ -71,36 +89,41 @@ open class ChatMessageConsentFragment(
         (denyButton.background as? GradientDrawable)?.setColor(
             ContextCompat.getColor(requireContext(), R.color.consentDenyButtonBackgroundColor)
         )
-        links.find { it.function == FunctionType.APPROVE }?.let { link ->
-            approveButton.text = link.text
-            approveButton.setOnClickListener {
-                ChatBackend.actionButton(link.id)
-                approveButton.setTextColor(
-                    ContextCompat.getColor(requireContext(), R.color.consentApproveButtonTextColor)
-                )
-                (approveButton.background as? GradientDrawable)?.alpha = 255
-                denyButton.setTextColor(
-                    ContextCompat.getColor(
-                        requireContext(), R.color.consentDenyButtonDisabledTextColor
+        links?.let { links ->
+            links.find { it.function == FunctionType.APPROVE }?.let { link ->
+                approveButton.text = link.text
+                approveButton.setOnClickListener {
+                    ChatBackend.actionButton(link.id)
+                    approveButton.setTextColor(
+                        ContextCompat.getColor(
+                            requireContext(),
+                            R.color.consentApproveButtonTextColor
+                        )
                     )
-                )
-                (denyButton.background as? GradientDrawable)?.alpha = 64
+                    (approveButton.background as? GradientDrawable)?.alpha = 255
+                    denyButton.setTextColor(
+                        ContextCompat.getColor(
+                            requireContext(), R.color.consentDenyButtonDisabledTextColor
+                        )
+                    )
+                    (denyButton.background as? GradientDrawable)?.alpha = 64
+                }
             }
-        }
-        links.find { it.function == FunctionType.DENY }?.let { link ->
-            denyButton.text = link.text
-            denyButton.setOnClickListener {
-                ChatBackend.actionButton(link.id)
-                denyButton.setTextColor(
-                    ContextCompat.getColor(requireContext(), R.color.consentDenyButtonTextColor)
-                )
-                (denyButton.background as? GradientDrawable)?.alpha = 255
-                approveButton.setTextColor(
-                    ContextCompat.getColor(
-                        requireContext(), R.color.consentApproveButtonDisabledTextColor
+            links.find { it.function == FunctionType.DENY }?.let { link ->
+                denyButton.text = link.text
+                denyButton.setOnClickListener {
+                    ChatBackend.actionButton(link.id)
+                    denyButton.setTextColor(
+                        ContextCompat.getColor(requireContext(), R.color.consentDenyButtonTextColor)
                     )
-                )
-                (approveButton.background as? GradientDrawable)?.alpha = 64
+                    (denyButton.background as? GradientDrawable)?.alpha = 255
+                    approveButton.setTextColor(
+                        ContextCompat.getColor(
+                            requireContext(), R.color.consentApproveButtonDisabledTextColor
+                        )
+                    )
+                    (approveButton.background as? GradientDrawable)?.alpha = 64
+                }
             }
         }
     }

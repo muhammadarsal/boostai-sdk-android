@@ -43,7 +43,7 @@ Add the boost.ai SDK library as a dependency in your app `build.gradle` file:
 
 ```kotlin
 dependencies { 
-  implementation 'com.github.BoostAI:mobile-sdk-android:1.0.1'
+  implementation 'com.github.BoostAI:mobile-sdk-android:1.0.2'
 }
 ```
 
@@ -66,7 +66,7 @@ Add the dependency:
 <dependency>
     <groupId>com.github.BoostAI</groupId>
     <artifactId>mobile-sdk-android</artifactId>
-    <version>1.0.1</version>
+    <version>1.0.2</version>
 </dependency>
 ```
 
@@ -332,7 +332,7 @@ The easiest way to use the backend for your own frontend needs is to subscribe t
 ```kotlin
 class MyFragment : Fragment, ChatBackend.MessageObserver {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+        super.onViewCreated(view, savedInstanceState)
         
         ChatBackend.addMessageObserver(this)
     }
@@ -362,7 +362,7 @@ Subscribe to notifications about config changes and update UI styling accordingl
 ```kotlin
 class MyFragment : Fragment, ChatBackend.ConfigObserver {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+        super.onViewCreated(view, savedInstanceState)
         
         ChatBackend.addConfigObserver(this)
     }

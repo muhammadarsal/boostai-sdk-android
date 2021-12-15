@@ -20,12 +20,15 @@
 package no.boostai.sdk.UI
 
 import android.os.Bundle
+import android.view.Gravity
 import android.view.View
 import android.widget.ImageView
+import android.widget.LinearLayout
 import androidx.fragment.app.Fragment
 import com.bumptech.glide.Glide
 import no.boostai.sdk.ChatBackend.ChatBackend
 import no.boostai.sdk.ChatBackend.Objects.ChatConfig
+import no.boostai.sdk.ChatBackend.Objects.ChatConfigDefaults
 import no.boostai.sdk.ChatBackend.Objects.Response.*
 import no.boostai.sdk.R
 import no.boostai.sdk.UI.Helpers.TimingHelper
@@ -33,66 +36,126 @@ import java.util.*
 import kotlin.concurrent.schedule
 
 open class ChatMessageFragment(
-    val response: Response?,
-    val animated: Boolean,
-    val isBlocked: Boolean,
-    val isClient: Boolean,
-    val isWelcomeMessage: Boolean,
-    val isWaitingForServerResponse: Boolean = false,
-    val isAwaitingFiles: Boolean = false,
-    val avatarUrl: String? = null,
-    val customConfig: ChatConfig? = null,
-    val delegate: ChatViewFragmentDelegate?
-) : Fragment(if (isClient) R.layout.chat_client_message else R.layout.chat_server_message) {
+    var response: Response? = null,
+    val animated: Boolean = false,
+    var isBlocked: Boolean = false,
+    var isClient: Boolean = false,
+    var isWelcomeMessage: Boolean = false,
+    var isWaitingForServerResponse: Boolean = false,
+    var isAwaitingFiles: Boolean = false,
+    var avatarUrl: String? = null,
+    var customConfig: ChatConfig? = null,
+    var delegate: ChatViewFragmentDelegate? = null
+) : Fragment(R.layout.chat_message) {
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    val responseKey = "response"
+    val isBlockedKey = "isBlocked"
+    val isClientKey = "isClient"
+    val isWelcomeMessageKey = "isWelcomeMessage"
+    val isWaitingForServerResponseKey = "isWaitingForServerResponse"
+    val avatarUrlKey = "avatarUrl"
+    val customConfigKey = "customConfig"
+    val delegateKey = "delegate"
+
+    override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        if (!isClient)
-            view.findViewById<ImageView>(R.id.avatar).let {
-                it.clipToOutline = true
-                if (response?.avatarUrl != null)
-                    Glide.with(this).load(response.avatarUrl).into(it)
-                if (avatarUrl != null) Glide.with(this).load(avatarUrl).into(it)
+        val bundle = savedInstanceState ?: arguments
+        bundle?.let {
+            response = it.getParcelable(responseKey)
+            isBlocked = it.getBoolean(isBlockedKey)
+            isClient = it.getBoolean(isClientKey)
+            isWelcomeMessage = it.getBoolean(isWelcomeMessageKey)
+            isWaitingForServerResponse = it.getBoolean(isWaitingForServerResponseKey)
+            avatarUrl = it.getString(avatarUrlKey)
+            customConfig = it.getParcelable(customConfigKey)
+            //delegate = it.getParcelable(delegateKey)
+        }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+
+        outState.putParcelable(responseKey, response)
+        outState.putBoolean(isBlockedKey, isBlocked)
+        outState.putBoolean(isClientKey, isClient)
+        outState.putBoolean(isWelcomeMessageKey, isWelcomeMessage)
+        outState.putBoolean(isWaitingForServerResponseKey, isWaitingForServerResponse)
+        outState.putString(avatarUrlKey, avatarUrl)
+        outState.putParcelable(customConfigKey, customConfig)
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        val imageView = view.findViewById<ImageView>(R.id.avatar)
+
+        if (isClient) {
+            imageView.visibility = View.GONE
+            val layoutParams = view.layoutParams as LinearLayout.LayoutParams
+            layoutParams.width = resources.getDimensionPixelSize(R.dimen.chat_view_part_min_width)
+            layoutParams.gravity = Gravity.RIGHT
+            view.layoutParams = layoutParams
+        } else {
+            imageView.clipToOutline = true
+
+            response?.avatarUrl?.let { avatarUrl ->
+                Glide.with(this).load(avatarUrl).into(imageView)
+            } ?: avatarUrl?.let { avatarUrl ->
+                Glide.with(this).load(avatarUrl).into(imageView)
             }
-        response?.elements?.forEachIndexed { index, element ->
-            val pace = ChatBackend.config?.pace ?: "normal"
-            val paceFactor = TimingHelper.calculatePace(pace)
-            val staggerDelay = TimingHelper.calculateStaggerDelay(pace, 1)
-            val timeUntilReveal = if (isClient) 0 else TimingHelper.calcTimeToRead(paceFactor)
-
-            if (animated)
-                Timer().schedule(timeUntilReveal * index) {
-                    addMessagePart(element, index)
-                    // If we have more elements to show, display a waiting indicator before showing it
-                    if (!isClient && index < response.elements.size - 1)
-                        Timer().schedule(staggerDelay) { addWaitingIndicator() }
-                }
-            else addMessagePart(element, index)
         }
-        if (isAwaitingFiles) {
-            val element = Element(
-                Payload(
-                    links = Arrays.asList(Link("upload", getString(R.string.upload_file), LinkType.action_link))
-                ),
-                ElementType.links
-            )
 
-            if (animated)
-                Timer().schedule(
-                    TimingHelper.timeUntilReveal() * (response?.elements?.size ?: 0)
-                ) { addMessagePart(element, response?.elements?.size ?: 0) }
-            else addMessagePart(element, response?.elements?.size ?: 0)
+        if (savedInstanceState == null) {
+            response?.elements?.forEachIndexed { index, element ->
+                val pace = ChatBackend.config?.pace ?: ChatConfigDefaults.pace
+                val paceFactor = TimingHelper.calculatePace(pace)
+                val staggerDelay = TimingHelper.calculateStaggerDelay(pace, 1)
+                val timeUntilReveal = if (isClient) 0 else TimingHelper.calcTimeToRead(paceFactor)
+
+                if (animated)
+                    Timer().schedule(timeUntilReveal * index) {
+                        addMessagePart(element, index)
+                        // If we have more elements to show, display a waiting indicator before showing it
+                        if (!isClient && index < (response?.elements?.size ?: 1) - 1)
+                            Timer().schedule(staggerDelay) { addWaitingIndicator() }
+                    }
+                else addMessagePart(element, index)
+            }
+            if (isAwaitingFiles) {
+                val element = Element(
+                    Payload(
+                        links = arrayListOf(
+                            Link(
+                                "upload",
+                                getString(R.string.upload_file),
+                                LinkType.action_link
+                            )
+                        )
+                    ),
+                    ElementType.links
+                )
+
+                if (animated)
+                    Timer().schedule(
+                        TimingHelper.timeUntilReveal() * (response?.elements?.size ?: 0)
+                    ) { addMessagePart(element, response?.elements?.size ?: 0) }
+                else addMessagePart(element, response?.elements?.size ?: 0)
+            }
+            // If set, render a waiting indicator while waiting for server response
+            if (isWaitingForServerResponse)
+                childFragmentManager
+                    .beginTransaction()
+                    .add(R.id.chat_message_parts, getWaitingFragment(), "waitingIndicator")
+                    .commitAllowingStateLoss()
         }
-        // If set, render a waiting indicator while waiting for server response
-        if (isWaitingForServerResponse)
-            childFragmentManager
-                .beginTransaction()
-                .add(R.id.chat_server_message_parts, getWaitingFragment(), "waitingIndicator")
-                .commitAllowingStateLoss()
     }
 
     fun addMessagePart(element: Element, index: Int) {
+        if (host == null) {
+            return
+        }
+
         val fragmentTransaction = childFragmentManager.beginTransaction();
 
         // Remove possible visible waiting indicator
@@ -103,25 +166,30 @@ open class ChatMessageFragment(
         val fragment = delegate?.getChatMessagePartFragment(
             element,
             response?.id,
-            animated) ?:
-        getMessagePartFragment(element, index)
+            animated
+        ) ?: getMessagePartFragment(element, index)
 
         // Show the message
         fragmentTransaction.add(
-            if (isClient) R.id.chat_client_message_parts else R.id.chat_server_message_parts,
+            R.id.chat_message_parts,
             fragment
         )
         fragmentTransaction.commitAllowingStateLoss()
     }
 
-    fun addWaitingIndicator() =
+    fun addWaitingIndicator() {
+        if (host == null) {
+            return
+        }
+
         childFragmentManager
             .beginTransaction()
-            .add(R.id.chat_server_message_parts, getWaitingFragment(), "waitingIndicator")
+            .add(R.id.chat_message_parts, getWaitingFragment(), "waitingIndicator")
             .commitAllowingStateLoss()
+    }
 
-    fun getMessagePartFragment(element: Element, index: Int): Fragment =
-        ChatMessagePartFragment(
+    fun getMessagePartFragment(element: Element, index: Int): Fragment {
+        return ChatMessagePartFragment(
             element,
             responseId = response?.id,
             isClient,
@@ -131,6 +199,7 @@ open class ChatMessageFragment(
             animated,
             customConfig
         )
+    }
 
     fun getWaitingFragment(): Fragment = ChatServerWaitingFragment(customConfig)
 

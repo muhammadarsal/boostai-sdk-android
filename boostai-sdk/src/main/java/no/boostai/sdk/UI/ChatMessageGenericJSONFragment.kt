@@ -17,7 +17,7 @@ import com.bumptech.glide.Glide
 import no.boostai.sdk.ChatBackend.Objects.Response.GenericCard
 import no.boostai.sdk.R
 
-open class ChatMessageGenericJSONFragment(val card: GenericCard, val animated: Boolean) :
+open class ChatMessageGenericJSONFragment(var card: GenericCard? = null, val animated: Boolean = true) :
     Fragment(R.layout.chat_server_message_generic_json_fragment) {
 
     lateinit var imageView: ImageView
@@ -25,8 +25,25 @@ open class ChatMessageGenericJSONFragment(val card: GenericCard, val animated: B
     lateinit var textTextView: TextView
     lateinit var linkTextView: TextView
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    val cardKey = "card"
+
+    override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val bundle = savedInstanceState ?: arguments
+        bundle?.let {
+            card = it.getParcelable(cardKey)
+        }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+
+        outState.putParcelable(cardKey, card)
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
         imageView = view.findViewById(R.id.generic_json_imageview)
         headingTextView = view.findViewById(R.id.generic_json_heading_textview)
@@ -35,17 +52,17 @@ open class ChatMessageGenericJSONFragment(val card: GenericCard, val animated: B
 
         if (animated)
             view.animation = AnimationUtils.loadAnimation(context, R.anim.chat_message_animate_in)
-        headingTextView.text = card.heading?.text
+        headingTextView.text = card?.heading?.text
         headingTextView.setTypeface(null, Typeface.BOLD)
-        textTextView.text = card.body?.text
-        card.image?.url?.let { Glide.with(this).load(it).into(imageView) }
-        card.link?.text?.let {
+        textTextView.text = card?.body?.text
+        card?.image?.url?.let { Glide.with(this).load(it).into(imageView) }
+        card?.link?.text?.let {
             val content = SpannableString(it)
 
             content.setSpan(UnderlineSpan(), 0, content.length, 0)
             linkTextView.setText(content)
         }
-        card.link?.url.let { url ->
+        card?.link?.url.let { url ->
             linkTextView.setOnClickListener {
                 Intent(Intent.ACTION_VIEW).let {
                     it.data = Uri.parse(url)
@@ -53,7 +70,7 @@ open class ChatMessageGenericJSONFragment(val card: GenericCard, val animated: B
                 }
             }
         }
-        imageView.visibility = if (card.image?.url.isNullOrEmpty()) View.GONE else View.VISIBLE
+        imageView.visibility = if (card?.image?.url.isNullOrEmpty()) View.GONE else View.VISIBLE
         headingTextView.visibility =
             if (headingTextView.text.isNullOrEmpty()) View.GONE else View.VISIBLE
         textTextView.visibility = if (textTextView.text.isNullOrEmpty()) View.GONE else View.VISIBLE

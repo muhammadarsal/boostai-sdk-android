@@ -34,13 +34,14 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import no.boostai.sdk.ChatBackend.ChatBackend
 import no.boostai.sdk.ChatBackend.Objects.ChatConfig
+import no.boostai.sdk.ChatBackend.Objects.ChatConfigDefaults
 import no.boostai.sdk.ChatBackend.Objects.Response.APIMessage
 import no.boostai.sdk.R
 
 open class ChatViewSettingsFragment(
-    val menuDelegate: ChatViewSettingsDelegate?,
-    val isDialog: Boolean = false,
-    val customConfig: ChatConfig? = null
+    var menuDelegate: ChatViewSettingsDelegate? = null,
+    var isDialog: Boolean = false,
+    var customConfig: ChatConfig? = null
 ) : Fragment(R.layout.chat_view_settings),
     ChatBackend.ConfigObserver {
 
@@ -53,6 +54,26 @@ open class ChatViewSettingsFragment(
     lateinit var backButton: TextView
     lateinit var poweredByTextView: TextView
     lateinit var poweredByImageView: ImageView
+
+    val isDialogKey = "isDialog"
+    val customConfigKey = "customConfig"
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        val bundle = savedInstanceState ?: arguments
+        bundle?.let {
+            isDialog = it.getBoolean(isDialogKey)
+            customConfig = it.getParcelable(customConfigKey)
+        }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+
+        outState.putBoolean(isDialogKey, isDialog)
+        outState.putParcelable(customConfigKey, customConfig)
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -68,10 +89,11 @@ open class ChatViewSettingsFragment(
         poweredByImageView = view.findViewById(R.id.powered_by_imageview)
 
         val fadeAnimation = AnimationUtils.loadAnimation(context, R.anim.fade_in_fast)
-
         view.animation = fadeAnimation
+
+        val requestConversationFeedback = ChatBackend.config?.requestConversationFeedback ?: ChatConfigDefaults.requestConversationFeedback
         feedbackButton.visibility =
-            if (ChatBackend.config?.requestConversationFeedback == true && !isDialog)
+            if (requestConversationFeedback && !isDialog)
                 View.VISIBLE else View.GONE
         deleteButton.visibility =
             if (ChatBackend.allowDeleteConversation) View.VISIBLE else View.GONE
