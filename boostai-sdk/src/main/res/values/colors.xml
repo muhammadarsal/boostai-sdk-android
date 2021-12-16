@@ -11,4 +11,12 @@
     <color name="consentDenyButtonBackgroundColor">#ffd4d5</color>
     <color name="consentDenyButtonTextColor">#8c0303</color>
     <color name="consentDenyButtonDisabledTextColor">#338c0303</color>
+    <color name="clientMessageBackground">#ede5ed</color>
+    <color name="clientMessageColor">#363636</color>
+    <color name="contrastColor">#ffffff</color>
+    <color name="linkBelowBackground">#552a55</color>
+    <color name="linkBelowColor">#ffffff</color>
+    <color name="primaryColor">#552a55</color>
+    <color name="serverMessageBackground">#f2f2f2</color>
+    <color name="serverMessageColor">#363636</color>
 </resources>

@@ -20,7 +20,6 @@
 package no.boostai.sdk.UI
 
 import android.content.Intent
-import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.os.Bundle
@@ -28,11 +27,11 @@ import android.text.Html
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.TextView
+import androidx.annotation.ColorRes
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import no.boostai.sdk.ChatBackend.ChatBackend
 import no.boostai.sdk.ChatBackend.Objects.ChatConfig
-import no.boostai.sdk.ChatBackend.Objects.ChatConfigDefaults
 import no.boostai.sdk.R
 import no.boostai.sdk.UI.Helpers.handleUrlClicks
 import no.boostai.sdk.UI.Helpers.trimTrailingWhitespace
@@ -119,23 +118,21 @@ open class ChatMessageTextFragment(
     fun updateStyling(config: ChatConfig?) {
         if (config == null) return
 
-        val backgroundColor: Int
-        val textColor: Int
+        @ColorRes val backgroundColor: Int
+        @ColorRes val textColor: Int
 
         if (isClient) {
-            backgroundColor = Color.parseColor(
-                customConfig?.clientMessageBackground ?: config.clientMessageBackground ?: ChatConfigDefaults.clientMessageBackground
-            )
-            textColor = Color.parseColor(
-                customConfig?.clientMessageColor ?: config.clientMessageColor ?: ChatConfigDefaults.clientMessageColor
-            )
+            backgroundColor = customConfig?.clientMessageBackground
+                ?: config.clientMessageBackground
+                ?: ContextCompat.getColor(requireContext(), R.color.clientMessageBackground)
+            textColor = customConfig?.clientMessageColor ?: customConfig?.clientMessageColor
+                ?: ContextCompat.getColor(requireContext(), R.color.clientMessageColor)
         } else {
-            backgroundColor = Color.parseColor(
-                customConfig?.serverMessageBackground ?: config.serverMessageBackground ?: ChatConfigDefaults.serverMessageBackground
-            )
-            textColor = Color.parseColor(
-                customConfig?.serverMessageColor ?: config.serverMessageColor ?: ChatConfigDefaults.serverMessageColor
-            )
+            backgroundColor = customConfig?.serverMessageBackground
+                ?: config.serverMessageBackground
+                ?: ContextCompat.getColor(requireContext(), R.color.serverMessageBackground)
+            textColor = customConfig?.serverMessageColor ?: config.serverMessageColor
+                ?: ContextCompat.getColor(requireContext(), R.color.serverMessageColor)
         }
 
         textView.setTextColor(textColor)

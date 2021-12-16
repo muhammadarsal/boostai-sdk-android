@@ -21,7 +21,6 @@ package no.boostai.sdk.UI
 
 import android.content.Context
 import android.content.res.ColorStateList
-import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
@@ -32,11 +31,11 @@ import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.annotation.ColorRes
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import no.boostai.sdk.ChatBackend.ChatBackend
 import no.boostai.sdk.ChatBackend.Objects.ChatConfig
-import no.boostai.sdk.ChatBackend.Objects.ChatConfigDefaults
 import no.boostai.sdk.ChatBackend.Objects.FeedbackValue
 import no.boostai.sdk.R
 
@@ -228,12 +227,10 @@ open class ChatViewFeedbackFragment(
     fun updateStyling(config: ChatConfig?) {
         if (config == null) return
 
-        val primaryColor = Color.parseColor(
-            customConfig?.primaryColor ?: config.primaryColor ?: ChatConfigDefaults.primaryColor
-        )
-        val contrastColor = Color.parseColor(
-            customConfig?.contrastColor ?: config.contrastColor ?: ChatConfigDefaults.contrastColor
-        )
+        @ColorRes val primaryColor = customConfig?.primaryColor ?: config.primaryColor
+            ?: ContextCompat.getColor(requireContext(), R.color.primaryColor)
+        @ColorRes val contrastColor = customConfig?.contrastColor ?: config.contrastColor
+            ?: ContextCompat.getColor(requireContext(), R.color.contrastColor)
         val messages = config.messages?.get(ChatBackend.languageCode)
 
         view?.background = ColorDrawable(primaryColor)

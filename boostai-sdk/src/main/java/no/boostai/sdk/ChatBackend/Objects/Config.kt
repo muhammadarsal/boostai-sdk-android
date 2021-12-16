@@ -18,10 +18,18 @@
 //
 
 package no.boostai.sdk.ChatBackend.Objects
+import android.graphics.Color
 import android.os.Parcelable
+import androidx.annotation.ColorRes
 import kotlinx.android.parcel.Parcelize
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 @Serializable
 @Parcelize
@@ -115,20 +123,28 @@ data class ConfigFilter (
 @Serializable
 @Parcelize
 data class ChatConfig (
+    @Serializable(with = HexColorSerializer::class)
+    @ColorRes var primaryColor: Int? = null,
+    @Serializable(with = HexColorSerializer::class)
+    @ColorRes var contrastColor: Int? = null,
+    @Serializable(with = HexColorSerializer::class)
+    @ColorRes var clientMessageBackground: Int? = null,
+    @Serializable(with = HexColorSerializer::class)
+    @ColorRes var clientMessageColor: Int? = null,
+    @Serializable(with = HexColorSerializer::class)
+    @ColorRes var serverMessageBackground: Int? = null,
+    @Serializable(with = HexColorSerializer::class)
+    @ColorRes var serverMessageColor: Int? = null,
+    @Serializable(with = HexColorSerializer::class)
+    @ColorRes var linkBelowBackground: Int? = null,
+    @Serializable(with = HexColorSerializer::class)
+    @ColorRes var linkBelowColor: Int? = null,
     var avatarStyle: String? = null,
-    var clientMessageBackground: String? = null,
-    var clientMessageColor: String? = null,
-    var contrastColor: String? = null,
+    var linkDisplayStyle: String? = null,
+    var requestConversationFeedback: Boolean? = false,
     var fileUploadServiceEndpointUrl: String? = null,
     var filters: List<ConfigFilter>? = null,
     var hasFilterSelector: Boolean? = null,
-    var linkBelowBackground: String? = null,
-    var linkBelowColor: String? = null,
-    var linkDisplayStyle: String? = null,
-    var primaryColor: String? = null,
-    var requestConversationFeedback: Boolean? = false,
-    var serverMessageBackground: String? = null,
-    var serverMessageColor: String? = null,
     var spacingBottom: Int? = null,
     var spacingRight: Int? = null,
     var windowStyle: String? = null,
@@ -139,20 +155,30 @@ data class ChatConfig (
 class ChatConfigDefaults {
     companion object {
         val avatarStyle: String = "square"
-        val clientMessageBackground: String = "#ede5ed"
-        val clientMessageColor: String = "#363636"
-        val contrastColor: String = "#ffffff"
         val hasFilterSelector: Boolean = false
-        val linkBelowBackground: String = "#552a55"
-        val linkBelowColor: String = "#ffffff"
         val linkDisplayStyle: String = "below"
-        val primaryColor: String = "#552a55"
         val requestConversationFeedback: Boolean = true
-        val serverMessageBackground: String = "#f2f2f2"
-        val serverMessageColor: String = "#363636"
         val spacingBottom: Int = 0
         val spacingRight: Int = 80
         val windowStyle: String = "rounded"
         val pace: String = "normal"
+    }
+}
+
+// Handle unknown ElementType case
+@Serializer(forClass = Int::class)
+object HexColorSerializer {
+    override val descriptor: SerialDescriptor
+        get() = PrimitiveSerialDescriptor("HexColor", PrimitiveKind.STRING)
+    override fun deserialize(decoder: Decoder): Int {
+        // If we don't have the element type provided by JSON, set it to UNKNOWN
+        return try {
+            Color.parseColor(decoder.decodeString())
+        } catch (e: Exception) {
+            0
+        }
+    }
+    override fun serialize(encoder: Encoder, value: Int) {
+        encoder.encodeString(java.lang.String.format("#%06X", 0xFFFFFF and value))
     }
 }

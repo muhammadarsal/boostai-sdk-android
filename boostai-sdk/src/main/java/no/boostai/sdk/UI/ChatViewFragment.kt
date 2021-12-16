@@ -22,7 +22,6 @@ package no.boostai.sdk.UI
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.ColorStateList
-import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.text.*
@@ -30,6 +29,7 @@ import android.text.style.ForegroundColorSpan
 import android.view.*
 import android.view.inputmethod.InputMethodManager
 import android.widget.*
+import androidx.annotation.ColorRes
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.fragment.app.Fragment
@@ -172,8 +172,8 @@ open class ChatViewFragment(
         })
         editText.onFocusChangeListener = View.OnFocusChangeListener { _, hasFocus ->
             // Update chat input color
-            val hexColor = customConfig?.primaryColor ?: ChatBackend.config?.primaryColor
-            var color = hexColor?.let { Color.parseColor(it) } ?: ContextCompat.getColor(requireContext(), R.color.purple)
+            var color = customConfig?.primaryColor ?: ChatBackend.config?.primaryColor
+                ?: ContextCompat.getColor(requireContext(), R.color.primaryColor)
 
             if (hasFocus) {
                 color = color and 0x00FFFFFF or 0x77000000 // Set opacity
@@ -338,9 +338,8 @@ open class ChatViewFragment(
 
     fun updateSubmitButtonState(text: String? = null) {
         val currentText = text ?: editText.text.toString()
-        val configPrimaryColor = customConfig?.primaryColor ?: ChatBackend.config?.primaryColor
-        val primaryColor =
-            configPrimaryColor?.let { Color.parseColor(configPrimaryColor) } ?: R.color.purple
+        val primaryColor = customConfig?.primaryColor ?: ChatBackend.config?.primaryColor
+            ?: ContextCompat.getColor(requireContext(), R.color.primaryColor)
         val isEnabled = currentText.trim().isNotEmpty() && !isBlocked
 
         submitButton.isEnabled = isEnabled
@@ -502,10 +501,8 @@ open class ChatViewFragment(
 
         inflater.inflate(R.menu.chat_toolbar_menu, menu)
 
-        val tintColorString = customConfig?.contrastColor ?: ChatBackend.config?.contrastColor
-        val tintColor =
-            if (tintColorString != null) Color.parseColor(tintColorString)
-            else ContextCompat.getColor(requireContext(), R.color.white)
+        @ColorRes val tintColor = customConfig?.contrastColor ?: ChatBackend.config?.contrastColor
+            ?: ContextCompat.getColor(requireContext(), R.color.contrastColor)
 
         // Set correct color on settings item
         val settingsItem = menu.findItem(R.id.action_settings)

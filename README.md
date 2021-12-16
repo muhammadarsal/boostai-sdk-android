@@ -43,7 +43,7 @@ Add the boost.ai SDK library as a dependency in your app `build.gradle` file:
 
 ```kotlin
 dependencies { 
-  implementation 'com.github.BoostAI:mobile-sdk-android:1.0.2'
+  implementation 'com.github.BoostAI:mobile-sdk-android:1.0.3'
 }
 ```
 
@@ -66,7 +66,7 @@ Add the dependency:
 <dependency>
     <groupId>com.github.BoostAI</groupId>
     <artifactId>mobile-sdk-android</artifactId>
-    <version>1.0.2</version>
+    <version>1.0.3</version>
 </dependency>
 ```
 
@@ -189,11 +189,14 @@ The `ChatViewFragment` is the main entry point for the chat view. It can be subc
 
 #### Colors
 
-Colors will normally be configured server-side, and all of the Boost UI view will use these colors by default. We encourage you to configure colors server-side to get a consistent color palette across platforms, but if you want to override these colors in your app, you can pass a custom config object to the `ChatViewFragment`:
+Colors will normally be configured server-side, and all of the Boost UI view will use these colors by default. We encourage you to configure colors server-side to get a consistent color palette across platforms, but if you want to override these colors in your app, you can pass a custom config object to the `ChatViewFragment`.
+
+The order of precedence for colors is (1) custom config color, (2) server config color, and (3) default embedded SDK colors. Example of precedence: (1) custom config `primaryColor`, (2) server config `primaryColor` and (3) `R.color.primaryColor` from `colors.xml`.
+
 
 ```kotlin
 val customConfig = ChatConfig()
-customConfig.primaryColor = "#FF0000"
+customConfig.primaryColor = getColor(R.color.red)
 val chatViewFragment = ChatViewFragment(customConfig = customConfig)
 ```
 

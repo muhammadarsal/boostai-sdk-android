@@ -20,7 +20,6 @@
 package no.boostai.sdkexample
 
 import android.content.res.ColorStateList
-import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
@@ -94,14 +93,13 @@ class MainActivity : AppCompatActivity(R.layout.activity_main), ChatBackend.Conf
         if (config == null) return
 
         config.primaryColor?.let {
-            val primaryColorDrawable = ColorDrawable(Color.parseColor(it))
+            val primaryColorDrawable = ColorDrawable(it)
             toolbar?.background = primaryColorDrawable
             tabLayout?.background = primaryColorDrawable
             viewPager?.background = primaryColorDrawable
         }
 
-        config.contrastColor?.let {
-            val contrastColor = Color.parseColor(it)
+        config.contrastColor?.let { contrastColor ->
             tabLayout?.tabTextColors = ColorStateList.valueOf(contrastColor)
             tabLayout?.setSelectedTabIndicatorColor(contrastColor)
         }

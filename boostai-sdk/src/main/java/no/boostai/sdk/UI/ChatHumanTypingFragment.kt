@@ -21,7 +21,6 @@ package no.boostai.sdk.UI
 
 import android.graphics.BlendMode
 import android.graphics.BlendModeColorFilter
-import android.graphics.Color
 import android.graphics.PorterDuff
 import android.os.Build
 import android.os.Bundle
@@ -29,10 +28,11 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
+import androidx.annotation.ColorRes
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import no.boostai.sdk.ChatBackend.ChatBackend
 import no.boostai.sdk.ChatBackend.Objects.ChatConfig
-import no.boostai.sdk.ChatBackend.Objects.ChatConfigDefaults
 import no.boostai.sdk.R
 
 open class ChatHumanTypingFragment (var customConfig: ChatConfig? = null) :
@@ -84,12 +84,12 @@ open class ChatHumanTypingFragment (var customConfig: ChatConfig? = null) :
     }
 
     fun updateStyling(config: ChatConfig) {
-        val backgroundColor = Color.parseColor(
-            customConfig?.serverMessageBackground ?: config.serverMessageBackground ?: ChatConfigDefaults.serverMessageBackground
-        )
-        val textColor = Color.parseColor(
-            customConfig?.serverMessageColor ?: config.serverMessageColor ?: ChatConfigDefaults.serverMessageColor
-        )
+        @ColorRes val backgroundColor =
+            customConfig?.serverMessageBackground ?: config.serverMessageBackground
+            ?: ContextCompat.getColor(requireContext(), R.color.serverMessageBackground)
+        @ColorRes val textColor =
+            customConfig?.serverMessageColor ?: config.serverMessageColor
+            ?: ContextCompat.getColor(requireContext(), R.color.serverMessageColor)
 
         backgroundColor.let {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)

@@ -21,6 +21,7 @@ package no.boostai.sdkexample
 
 import android.os.Bundle
 import android.view.View
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import no.boostai.sdk.ChatBackend.ChatBackend
 import no.boostai.sdk.ChatBackend.Objects.ChatConfig
@@ -34,7 +35,7 @@ class FloatingAvatarFragment(val customConfig: ChatConfig? = null) :
         super.onViewCreated(view, savedInstanceState)
 
         val customConfig = ChatConfig()
-        customConfig.primaryColor = "#FF0000"
+        customConfig.primaryColor = ContextCompat.getColor(requireContext(), android.R.color.holo_red_dark)
         ChatViewFragment(customConfig = customConfig)
 
         ChatBackend.onReady(object : ChatBackend.ConfigReadyListener {
