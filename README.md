@@ -43,7 +43,7 @@ Add the boost.ai SDK library as a dependency in your app `build.gradle` file:
 
 ```kotlin
 dependencies { 
-  implementation 'com.github.BoostAI:mobile-sdk-android:1.0.3'
+  implementation 'com.github.BoostAI:mobile-sdk-android:1.0.4'
 }
 ```
 
@@ -66,7 +66,7 @@ Add the dependency:
 <dependency>
     <groupId>com.github.BoostAI</groupId>
     <artifactId>mobile-sdk-android</artifactId>
-    <version>1.0.3</version>
+    <version>1.0.4</version>
 </dependency>
 ```
 
@@ -193,6 +193,7 @@ Colors will normally be configured server-side, and all of the Boost UI view wil
 
 The order of precedence for colors is (1) custom config color, (2) server config color, and (3) default embedded SDK colors. Example of precedence: (1) custom config `primaryColor`, (2) server config `primaryColor` and (3) `R.color.primaryColor` from `colors.xml`.
 
+Please note that all colors are `ColorInt`s, and resource colors must be converted to color integers (i.e. `ContextCompat.getColor(requireContext(), R.color.primaryColor)`).
 
 ```kotlin
 val customConfig = ChatConfig()

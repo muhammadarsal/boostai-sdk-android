@@ -28,7 +28,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
-import androidx.annotation.ColorRes
+import androidx.annotation.ColorInt
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import no.boostai.sdk.ChatBackend.ChatBackend
@@ -84,10 +84,10 @@ open class ChatServerWaitingFragment (var customConfig: ChatConfig? = null) :
     }
 
     fun updateStyling(config: ChatConfig) {
-        @ColorRes val backgroundColor = customConfig?.serverMessageBackground
+        @ColorInt val backgroundColor = customConfig?.serverMessageBackground
             ?: config.serverMessageBackground
             ?: ContextCompat.getColor(requireContext(), R.color.serverMessageBackground)
-        @ColorRes val textColor = customConfig?.serverMessageColor ?: config.serverMessageColor
+        @ColorInt val textColor = customConfig?.serverMessageColor ?: config.serverMessageColor
             ?: ContextCompat.getColor(requireContext(), R.color.serverMessageColor)
 
         backgroundColor.let {

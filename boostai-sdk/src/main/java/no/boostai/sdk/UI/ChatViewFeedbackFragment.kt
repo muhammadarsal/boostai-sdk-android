@@ -31,7 +31,7 @@ import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.annotation.ColorRes
+import androidx.annotation.ColorInt
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import no.boostai.sdk.ChatBackend.ChatBackend
@@ -227,9 +227,9 @@ open class ChatViewFeedbackFragment(
     fun updateStyling(config: ChatConfig?) {
         if (config == null) return
 
-        @ColorRes val primaryColor = customConfig?.primaryColor ?: config.primaryColor
+        @ColorInt val primaryColor = customConfig?.primaryColor ?: config.primaryColor
             ?: ContextCompat.getColor(requireContext(), R.color.primaryColor)
-        @ColorRes val contrastColor = customConfig?.contrastColor ?: config.contrastColor
+        @ColorInt val contrastColor = customConfig?.contrastColor ?: config.contrastColor
             ?: ContextCompat.getColor(requireContext(), R.color.contrastColor)
         val messages = config.messages?.get(ChatBackend.languageCode)
 

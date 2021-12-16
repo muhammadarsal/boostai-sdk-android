@@ -20,7 +20,7 @@
 package no.boostai.sdk.ChatBackend.Objects
 import android.graphics.Color
 import android.os.Parcelable
-import androidx.annotation.ColorRes
+import androidx.annotation.ColorInt
 import kotlinx.android.parcel.Parcelize
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -124,21 +124,21 @@ data class ConfigFilter (
 @Parcelize
 data class ChatConfig (
     @Serializable(with = HexColorSerializer::class)
-    @ColorRes var primaryColor: Int? = null,
+    @ColorInt var primaryColor: Int? = null,
     @Serializable(with = HexColorSerializer::class)
-    @ColorRes var contrastColor: Int? = null,
+    @ColorInt var contrastColor: Int? = null,
     @Serializable(with = HexColorSerializer::class)
-    @ColorRes var clientMessageBackground: Int? = null,
+    @ColorInt var clientMessageBackground: Int? = null,
     @Serializable(with = HexColorSerializer::class)
-    @ColorRes var clientMessageColor: Int? = null,
+    @ColorInt var clientMessageColor: Int? = null,
     @Serializable(with = HexColorSerializer::class)
-    @ColorRes var serverMessageBackground: Int? = null,
+    @ColorInt var serverMessageBackground: Int? = null,
     @Serializable(with = HexColorSerializer::class)
-    @ColorRes var serverMessageColor: Int? = null,
+    @ColorInt var serverMessageColor: Int? = null,
     @Serializable(with = HexColorSerializer::class)
-    @ColorRes var linkBelowBackground: Int? = null,
+    @ColorInt var linkBelowBackground: Int? = null,
     @Serializable(with = HexColorSerializer::class)
-    @ColorRes var linkBelowColor: Int? = null,
+    @ColorInt var linkBelowColor: Int? = null,
     var avatarStyle: String? = null,
     var linkDisplayStyle: String? = null,
     var requestConversationFeedback: Boolean? = false,
@@ -165,7 +165,7 @@ class ChatConfigDefaults {
     }
 }
 
-// Handle unknown ElementType case
+// Handle hex color serialization
 @Serializer(forClass = Int::class)
 object HexColorSerializer {
     override val descriptor: SerialDescriptor

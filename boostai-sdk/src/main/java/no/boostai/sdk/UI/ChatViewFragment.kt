@@ -29,7 +29,7 @@ import android.text.style.ForegroundColorSpan
 import android.view.*
 import android.view.inputmethod.InputMethodManager
 import android.widget.*
-import androidx.annotation.ColorRes
+import androidx.annotation.ColorInt
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.fragment.app.Fragment
@@ -501,7 +501,7 @@ open class ChatViewFragment(
 
         inflater.inflate(R.menu.chat_toolbar_menu, menu)
 
-        @ColorRes val tintColor = customConfig?.contrastColor ?: ChatBackend.config?.contrastColor
+        @ColorInt val tintColor = customConfig?.contrastColor ?: ChatBackend.config?.contrastColor
             ?: ContextCompat.getColor(requireContext(), R.color.contrastColor)
 
         // Set correct color on settings item

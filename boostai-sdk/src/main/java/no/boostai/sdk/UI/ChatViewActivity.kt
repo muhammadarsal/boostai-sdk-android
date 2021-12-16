@@ -22,7 +22,7 @@ package no.boostai.sdk.UI
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.view.View
-import androidx.annotation.ColorRes
+import androidx.annotation.ColorInt
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.content.ContextCompat
@@ -84,7 +84,7 @@ open class ChatViewActivity: AppCompatActivity(R.layout.chat_view_activity), Cha
     fun updateStyling(config: ChatConfig?) {
         if (config == null) return
 
-        @ColorRes val primaryColor = customConfig?.primaryColor ?: config.primaryColor
+        @ColorInt val primaryColor = customConfig?.primaryColor ?: config.primaryColor
             ?: ContextCompat.getColor(this, R.color.primaryColor)
 
         supportActionBar?.setBackgroundDrawable(ColorDrawable(primaryColor))

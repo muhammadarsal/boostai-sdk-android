@@ -30,7 +30,7 @@ import android.view.animation.Animation
 import android.view.animation.AnimationUtils
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.annotation.ColorRes
+import androidx.annotation.ColorInt
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import no.boostai.sdk.ChatBackend.ChatBackend
@@ -149,9 +149,9 @@ open class ChatMessageButtonFragment(
     fun updateStyling(config: ChatConfig?) {
         if (config == null) return
 
-        @ColorRes val textColor = customConfig?.linkBelowColor ?: config.linkBelowColor
+        @ColorInt val textColor = customConfig?.linkBelowColor ?: config.linkBelowColor
             ?: ContextCompat.getColor(requireContext(), R.color.linkBelowColor)
-        @ColorRes val backgroundColor = customConfig?.linkBelowBackground
+        @ColorInt val backgroundColor = customConfig?.linkBelowBackground
             ?: config.linkBelowBackground
             ?: ContextCompat.getColor(requireContext(), R.color.linkBelowBackground)
 
