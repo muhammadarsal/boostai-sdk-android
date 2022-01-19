@@ -146,6 +146,50 @@ open class ChatViewSettingsFragment(
         (backButton.background as? GradientDrawable)?.setColor(contrastColor)
         poweredByTextView.setTextColor(contrastColor)
         poweredByImageView.imageTintList = ColorStateList.valueOf(contrastColor)
+
+        updateTranslatedMessages(config)
+    }
+
+    fun updateTranslatedMessages(config: ChatConfig?) {
+        val customStrings = customConfig?.messages?.get(ChatBackend.languageCode)
+        val strings = config?.messages?.get(ChatBackend.languageCode)
+        val fallbackStrings = ChatBackend.config?.messages?.get("en-US")
+
+        downloadButton.text = getMessage(
+            customStrings?.downloadConversation,
+            strings?.downloadConversation,
+            fallbackStrings?.downloadConversation
+        )
+
+        deleteButton.text = getMessage(
+            customStrings?.deleteConversation,
+            strings?.deleteConversation,
+            fallbackStrings?.deleteConversation
+        )
+
+        privacyPolicyTextView.text = getMessage(
+            customStrings?.privacyPolicy,
+            strings?.privacyPolicy,
+            fallbackStrings?.privacyPolicy
+        )
+
+        backButton.text = getMessage(
+            customStrings?.back,
+            strings?.back,
+            fallbackStrings?.back
+        )
+
+        feedbackButton.text = getMessage(
+            customStrings?.feedbackPrompt,
+            strings?.feedbackPrompt,
+            fallbackStrings?.feedbackPrompt
+        )
+    }
+
+    private fun getMessage(string1: String?, string2: String?, string3: String?): String? {
+        return string1?.let { if (it.isNotEmpty()) it else null }
+            ?: string2?.let { if (it.isNotEmpty()) it else null }
+            ?: string3?.let { if (it.isNotEmpty()) it else null }
     }
 
     fun downloadConversation() {
@@ -160,7 +204,12 @@ open class ChatViewSettingsFragment(
                     intent.type = "text/plain"
                     intent.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.conversation))
                     intent.putExtra(Intent.EXTRA_TEXT, apiMessage.download)
-                    startActivity(Intent.createChooser(intent, getString(R.string.download_conversation)))
+                    startActivity(
+                        Intent.createChooser(
+                            intent,
+                            getString(R.string.download_conversation)
+                        )
+                    )
                 }
             }
 

@@ -139,7 +139,7 @@ data class ChatConfig (
     @ColorInt var linkBelowBackground: Int? = null,
     @Serializable(with = HexColorSerializer::class)
     @ColorInt var linkBelowColor: Int? = null,
-    var avatarStyle: String? = null,
+    var avatarStyle: AvatarStyle? = null,
     var linkDisplayStyle: String? = null,
     var requestConversationFeedback: Boolean? = false,
     var fileUploadServiceEndpointUrl: String? = null,
@@ -154,7 +154,7 @@ data class ChatConfig (
 
 class ChatConfigDefaults {
     companion object {
-        val avatarStyle: String = "square"
+        val avatarStyle: AvatarStyle = AvatarStyle.rounded
         val hasFilterSelector: Boolean = false
         val linkDisplayStyle: String = "below"
         val requestConversationFeedback: Boolean = true
@@ -163,6 +163,12 @@ class ChatConfigDefaults {
         val windowStyle: String = "rounded"
         val pace: String = "normal"
     }
+}
+
+@Serializable
+enum class AvatarStyle {
+    rounded,
+    squared
 }
 
 // Handle hex color serialization

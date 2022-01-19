@@ -294,6 +294,7 @@ open class ChatViewFragment(
         }
 
         hideStatusMessage()
+        updateTranslatedMessages(ChatBackend.config)
 
         // Show human typing indicator if applicable
         if (message.conversation?.state?.humanIsTyping == true) {
@@ -315,11 +316,14 @@ open class ChatViewFragment(
     fun updateStyling(config: ChatConfig?) {
         if (config == null) return
 
-        config.messages?.get(ChatBackend.languageCode)?.composePlaceholder?.let {
+        updateTranslatedMessages(config)
+        updateSubmitButtonState()
+    }
+
+    fun updateTranslatedMessages(config: ChatConfig?) {
+        config?.messages?.get(ChatBackend.languageCode)?.composePlaceholder?.let {
             editText.hint = it
         }
-
-        updateSubmitButtonState()
     }
 
     @SuppressLint("SetTextI18n")

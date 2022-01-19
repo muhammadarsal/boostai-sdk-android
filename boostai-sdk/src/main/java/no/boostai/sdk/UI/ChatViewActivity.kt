@@ -88,6 +88,11 @@ open class ChatViewActivity: AppCompatActivity(R.layout.chat_view_activity), Cha
             ?: ContextCompat.getColor(this, R.color.primaryColor)
 
         supportActionBar?.setBackgroundDrawable(ColorDrawable(primaryColor))
+
+        val title = customConfig?.messages?.get(ChatBackend.languageCode)?.headerText
+            ?: config.messages?.get(ChatBackend.languageCode)?.headerText
+        supportActionBar?.title = title
+        supportActionBar?.setDisplayShowTitleEnabled(title != null)
     }
 
     override fun onConfigReceived(backend: ChatBackend, config: ChatConfig) = updateStyling(config)

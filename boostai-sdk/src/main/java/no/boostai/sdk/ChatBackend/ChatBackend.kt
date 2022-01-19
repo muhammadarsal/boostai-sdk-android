@@ -68,7 +68,7 @@ object ChatBackend {
     var preferredClientLanguages: ArrayList<String> = ArrayList()
 
     var isBlocked = false
-    var allowDeleteConversation = true
+    var allowDeleteConversation = false
     var chatStatus: ChatStatus = ChatStatus.virtual_agent
     var poll = false
     var maxInputChars = 110
@@ -511,6 +511,7 @@ object ChatBackend {
         this.maxInputChars = state.maxInputChars ?: this.maxInputChars
         this.lastResponse = apiMessage
         this.pollValue = apiMessage.response?.id ?: (if (apiMessage.responses?.size ?: 0 > 0) apiMessage.responses?.last()?.id else null) ?: pollValue
+        this.privacyPolicyUrl = conversation.state.privacyPolicyUrl ?: this.privacyPolicyUrl
 
         // Handling human poll
         if (state.poll != null) {

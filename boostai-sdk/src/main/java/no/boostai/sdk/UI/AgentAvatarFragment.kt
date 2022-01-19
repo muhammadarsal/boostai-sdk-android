@@ -23,12 +23,13 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.ImageView
+import androidx.annotation.DrawableRes
 import androidx.fragment.app.Fragment
 import no.boostai.sdk.ChatBackend.Objects.ChatConfig
 import no.boostai.sdk.R
 
 open class AgentAvatarFragment(
-    var avatarImageResource: Int? = null,
+    @DrawableRes var avatarImageResource: Int? = null,
     var customConfig: ChatConfig? = null
 ) : Fragment(R.layout.agent_avatar_view) {
 

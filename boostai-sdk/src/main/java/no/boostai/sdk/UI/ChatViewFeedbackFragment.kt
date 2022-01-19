@@ -243,6 +243,38 @@ open class ChatViewFeedbackFragment(
         submitButton.imageTintList = ColorStateList.valueOf(contrastColor)
         if (isDialog) backButton.text = messages?.closeWindow ?: getString(R.string.close)
         else backButton.text = messages?.back ?: getString(R.string.back)
+
+        updateTranslatedMessages(config)
+    }
+
+    fun updateTranslatedMessages(config: ChatConfig?) {
+        val customStrings = customConfig?.messages?.get(ChatBackend.languageCode)
+        val strings = config?.messages?.get(ChatBackend.languageCode)
+        val fallbackStrings = ChatBackend.config?.messages?.get("en-US")
+
+        feedbackTextView.text = getMessage(
+            customStrings?.feedbackPrompt,
+            strings?.feedbackPrompt,
+            fallbackStrings?.feedbackPrompt
+        )
+
+        thumbsUpButton.contentDescription = getMessage(
+            customStrings?.feedbackThumbsUp,
+            strings?.feedbackThumbsUp,
+            fallbackStrings?.feedbackThumbsUp
+        )
+
+        thumbsDownButton.contentDescription = getMessage(
+            customStrings?.feedbackThumbsDown,
+            strings?.feedbackThumbsDown,
+            fallbackStrings?.feedbackThumbsDown
+        )
+    }
+
+    private fun getMessage(string1: String?, string2: String?, string3: String?): String? {
+        return string1?.let { if (it.isNotEmpty()) it else null }
+            ?: string2?.let { if (it.isNotEmpty()) it else null }
+            ?: string3?.let { if (it.isNotEmpty()) it else null }
     }
 
     override fun onConfigReceived(backend: ChatBackend, config: ChatConfig) = updateStyling(config)

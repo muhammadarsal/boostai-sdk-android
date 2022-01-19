@@ -24,9 +24,11 @@ import android.view.Gravity
 import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.bumptech.glide.Glide
 import no.boostai.sdk.ChatBackend.ChatBackend
+import no.boostai.sdk.ChatBackend.Objects.AvatarStyle
 import no.boostai.sdk.ChatBackend.Objects.ChatConfig
 import no.boostai.sdk.ChatBackend.Objects.ChatConfigDefaults
 import no.boostai.sdk.ChatBackend.Objects.Response.*
@@ -46,7 +48,7 @@ open class ChatMessageFragment(
     var avatarUrl: String? = null,
     var customConfig: ChatConfig? = null,
     var delegate: ChatViewFragmentDelegate? = null
-) : Fragment(R.layout.chat_message) {
+) : Fragment(R.layout.chat_message), ChatBackend.ConfigObserver {
 
     val responseKey = "response"
     val isBlockedKey = "isBlocked"
@@ -56,6 +58,8 @@ open class ChatMessageFragment(
     val avatarUrlKey = "avatarUrl"
     val customConfigKey = "customConfig"
     val delegateKey = "delegate"
+
+    lateinit var imageView: ImageView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -88,7 +92,7 @@ open class ChatMessageFragment(
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val imageView = view.findViewById<ImageView>(R.id.avatar)
+        imageView = view.findViewById(R.id.avatar)
 
         if (isClient) {
             imageView.visibility = View.GONE
@@ -149,6 +153,15 @@ open class ChatMessageFragment(
                     .add(R.id.chat_message_parts, getWaitingFragment(), "waitingIndicator")
                     .commitAllowingStateLoss()
         }
+
+        updateStyling(ChatBackend.config)
+        ChatBackend.addConfigObserver(this)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+
+        ChatBackend.removeConfigObserver(this)
     }
 
     fun addMessagePart(element: Element, index: Int) {
@@ -203,4 +216,20 @@ open class ChatMessageFragment(
 
     fun getWaitingFragment(): Fragment = ChatServerWaitingFragment(customConfig)
 
+    fun updateStyling(config: ChatConfig?) {
+        if (config == null) return
+
+        if (!isClient) {
+            val avatarStyle = customConfig?.avatarStyle ?: config.avatarStyle ?: ChatConfigDefaults.avatarStyle
+            imageView.background = if (avatarStyle == AvatarStyle.squared) null else ContextCompat.getDrawable(requireContext(), R.drawable.rounded)
+        }
+    }
+
+    override fun onConfigReceived(backend: ChatBackend, config: ChatConfig) {
+        updateStyling(config)
+    }
+
+    override fun onFailure(backend: ChatBackend, error: Exception) {
+        TODO("Not yet implemented")
+    }
 }
