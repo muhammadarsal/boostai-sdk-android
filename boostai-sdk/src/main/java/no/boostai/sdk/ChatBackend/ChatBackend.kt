@@ -23,18 +23,14 @@ import android.os.Handler
 import android.os.Looper
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.encodeToJsonElement
-import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.*
 import no.boostai.sdk.ChatBackend.Objects.*
-import no.boostai.sdk.ChatBackend.Objects.Response.APIMessage
-import no.boostai.sdk.ChatBackend.Objects.Response.ChatStatus
-import no.boostai.sdk.ChatBackend.Objects.Response.SDKException
+import no.boostai.sdk.ChatBackend.Objects.Response.*
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.Response
 import java.io.IOException
 import java.lang.ref.WeakReference
 import java.net.URL
@@ -57,19 +53,28 @@ object ChatBackend {
 
     /// User token. This is used instead of conversation id if set
     var userToken: String? = null
+
+    /// Reference. For internal use
     var reference: String = ""
+
+    /// An string that is forwarded to External API's on each request
+    var customPayload: String? = null
+
+    /// The endpoint to upload files
+    var fileUploadServiceEndpointUrl: String? = null
+
+    /// Sets the Human Chat skill for the conversation
+    var skill: String? = null
 
     /// Set your preference for html or text response. This will be added to all calls supporting it. Default is html=false
     var clean = false
 
     /// The current language of the bot
-    var languageCode: String = "no-NO"
-    var clientTimezone: String = "Europe/Oslo"
-    var preferredClientLanguages: ArrayList<String> = ArrayList()
+    var languageCode: String = "no-US"
 
     var isBlocked = false
     var allowDeleteConversation = false
-    var chatStatus: ChatStatus = ChatStatus.virtual_agent
+    var chatStatus: ChatStatus = ChatStatus.VIRTUAL_AGENT
     var poll = false
     var maxInputChars = 110
     var privacyPolicyUrl = "https://www.boost.ai/privacy-policy"
@@ -81,10 +86,11 @@ object ChatBackend {
     var pollValue: String? = null
     var pollTimer: TimerTask? = null
 
-    var filter: ConfigFilter? = null
+    var filter: Filter? = null
 
-    private var observers = ArrayList<WeakReference<MessageObserver>>()
+    private var messageObservers = ArrayList<WeakReference<MessageObserver>>()
     private var configObservers = ArrayList<WeakReference<ConfigObserver>>()
+    private var eventObservers = ArrayList<WeakReference<EventObserver>>()
 
     var messages: ArrayList<APIMessage> = ArrayList()
     var vanId: Int? = null
@@ -126,14 +132,15 @@ object ChatBackend {
             override fun onResponse(apiMessage: APIMessage) {}
         }, object : APIMessageResponseHandler {
             override fun handleResponse(body: String, listener: APIMessageResponseListener?) {
-                val parsedConfig = chatbackendJson.decodeFromString<ChatConfig>(body)
-                config = parsedConfig
+                val parsedConfig = chatbackendJson.decodeFromString<ConfigV2>(body)
+                val configV3 = convertConfig(parsedConfig)
+                config = configV3
 
                 Handler(Looper.getMainLooper()).post {
-                    configReadyListener?.onReady(parsedConfig)
+                    configReadyListener?.onReady(configV3)
                 }
 
-                publishConfigUpdate(config)
+                publishConfigUpdate(configV3)
             }
         })
     }
@@ -144,7 +151,12 @@ object ChatBackend {
     ///
     /// - Parameter message: An optional CommandStart if you want to set all the parameters of the start command
     fun start(message: CommandStart? = null, listener: APIMessageResponseListener? = null) {
-        send(message ?: CommandStart(this.userToken), listener)
+        val m = message ?: CommandStart()
+        m.userToken = m.userToken ?: userToken
+        m.skill = m.skill ?: skill
+        m.customPayload = m.customPayload ?: customPayload
+
+        send(m, listener)
     }
 
     /// STOP command
@@ -161,7 +173,7 @@ object ChatBackend {
     /// RESUME command
     /// - Parameter message: An optional CommandResume if you want to set all the parameters of the resume command
     public fun resume(message: CommandResume? = null, listener: APIMessageResponseListener? = null) {
-        send(message ?: CommandResume(conversationId, userToken), listener)
+        send(message ?: CommandResume(conversationId, userToken, skill = skill), listener)
     }
 
     /// DELETE command
@@ -214,7 +226,7 @@ object ChatBackend {
 
     /// This command is mostly internal. Try to use clientTyping(text) instead.
     fun typing(listener: APIMessageResponseListener? = null) {
-        if (chatStatus == ChatStatus.virtual_agent) {
+        if (chatStatus == ChatStatus.VIRTUAL_AGENT) {
             return
         }
 
@@ -260,7 +272,7 @@ object ChatBackend {
     /// { "command": "POST", "type": "action_link", "conversation_id": String, "id": String}
     /// - parameter id: link_id from the buttons in the payload element list
     fun actionButton(id: String, listener: APIMessageResponseListener? = null) {
-        val message = createPostMessage(Type.action_link)
+        val message = createPostMessage(Type.ACTION_LINK)
         message.id = id
         send(message, listener)
     }
@@ -270,16 +282,27 @@ object ChatBackend {
     /// { "command": "POST", "type": "type", "conversation_id": String, "value": String}
     /// - parameter value: A string to send
     fun message(value: String, listener: APIMessageResponseListener? = null) {
-        val message = createPostMessage(Type.text)
+        val message = createPostMessage(Type.TEXT)
         message.value = Json.encodeToJsonElement(value)
 
         try {
-            val dateCreated = DateAsISO8601Serializer.formatter.format(Date())
-            val uuid = UUID.randomUUID()
-            val json = """
-            {"response": {"id": "$uuid","date_created": "$dateCreated", "language": "$languageCode","source": "client","elements": [{"payload": {"text": "$value"}, "type": "text"}]}}
-            """
-            val apiMessage = chatbackendJson.decodeFromString<APIMessage>(json)
+            val uuid = UUID.randomUUID().toString()
+            val apiMessage = APIMessage(
+                response = no.boostai.sdk.ChatBackend.Objects.Response.Response(
+                    id = uuid,
+                    dateCreated = Date(),
+                    language = languageCode,
+                    source = SourceType.CLIENT,
+                    elements = listOf(
+                        Element(
+                            payload = Payload(
+                                text = value,
+                            ),
+                            type = ElementType.TEXT
+                        )
+                    )
+                )
+            )
             messages.add(apiMessage)
             publishResponse(apiMessage, null)
         } catch (e: SerializationException) {
@@ -308,7 +331,7 @@ object ChatBackend {
     /// - parameter id: The id on the payload element you are giving feedback on
     /// - parameter value: Value of the feedback
     fun feedback(id: String, value: FeedbackValue, listener: APIMessageResponseListener? = null) {
-        val message = createPostMessage(Type.feedback)
+        val message = createPostMessage(Type.FEEDBACK)
         message.id = id
         message.value = Json.encodeToJsonElement(value)
         send(message, listener)
@@ -320,7 +343,7 @@ object ChatBackend {
     /// {"command": "POST", "type": "external_link", "conversation_id": String, "id": String}
     /// - parameter id: id on external link in payload
     fun urlButton(id: String, listener: APIMessageResponseListener? = null) {
-        val message = createPostMessage(Type.external_link)
+        val message = createPostMessage(Type.EXTERNAL_LINK)
         message.id = id
         send(message, listener)
     }
@@ -331,7 +354,7 @@ object ChatBackend {
     /// {"command": "POST", "type": "files", "conversation_id": String, "value": [{ "filename": String, "mimetype": String, "url": String}]}
     /// - parameter files: Array of files
     fun sendFiles(files: List<File>, listener: APIMessageResponseListener? = null) {
-        val message = createPostMessage(Type.files)
+        val message = createPostMessage(Type.FILES)
 
         // Hack to fix the fact that the upload service returns "mimeType" while the API endpoint
         // expects "mimetype" (all lowercase)
@@ -349,7 +372,7 @@ object ChatBackend {
     /// {"command": "POST", "type": "trigger_action", "conversation_id": String, "id": String}
     /// - parameter id: action id
     fun triggerAction(id: String, listener: APIMessageResponseListener? = null) {
-        val message = createPostMessage(Type.trigger_action)
+        val message = createPostMessage(Type.TRIGGER_ACTION)
         message.id = id
         send(message, listener)
     }
@@ -399,7 +422,7 @@ object ChatBackend {
                 }
             }
             is CommandResume -> {
-                if (message.clean == null && this.clean) {
+                if (this.clean) {
                     message.clean = true
                 }
             }
@@ -461,9 +484,12 @@ object ChatBackend {
                              responseHandler.handleResponse(body, listener)
                         } else {
                             val apiMessage = chatbackendJson.decodeFromString<APIMessage>(body)
+
                             Handler(Looper.getMainLooper()).post {
                                 listener?.onResponse(apiMessage)
                             }
+
+                            handleJsonEvent(apiMessage)
                         }
                     } else {
                         val exception = chatbackendJson.decodeFromString<SDKException>(body)
@@ -499,6 +525,26 @@ object ChatBackend {
         })
     }
 
+    // Local message only. Used to display action link clicks as user message bubbles
+    fun userActionMessage(message: String) {
+        val apiMessage = APIMessage(
+            response = no.boostai.sdk.ChatBackend.Objects.Response.Response(
+                id = UUID.randomUUID().toString(),
+                SourceType.CLIENT,
+                language = languageCode,
+                elements = listOf(
+                    Element(
+                        payload = Payload(text = message),
+                        type = ElementType.TEXT
+                    )
+                )
+            )
+        )
+
+        messages.add(apiMessage)
+        publishResponse(apiMessage, null)
+    }
+
     fun handleApiMessage(apiMessage: APIMessage) {
         val conversation = apiMessage.conversation ?: throw SDKException("No conversation in response")
 
@@ -522,7 +568,7 @@ object ChatBackend {
 
         this.poll = state.poll ?: this.poll
 
-        if (state.poll != null && state.poll && Arrays.asList(ChatStatus.in_human_chat_queue, ChatStatus.assigned_to_human).indexOf(conversation.state.chatStatus) != -1) {
+        if (state.poll != null && state.poll && Arrays.asList(ChatStatus.IN_HUMAN_CHAT_QUEUE, ChatStatus.ASSIGNED_TO_HUMAN).indexOf(conversation.state.chatStatus) != -1) {
             startPolling()
         } else {
             stopPolling()
@@ -547,7 +593,7 @@ object ChatBackend {
     }
 
     fun uploadFilesToAPI(files: List<java.io.File>) {
-        val endpointURL = config?.fileUploadServiceEndpointUrl ?: return
+        val endpointURL = fileUploadServiceEndpointUrl ?: return
 
         val formBuilder = MultipartBody.Builder()
             .setType(MultipartBody.FORM)
@@ -585,6 +631,31 @@ object ChatBackend {
         })
     }
 
+    fun handleJsonEvent(apiMessage: APIMessage) {
+        val messageResponses = apiMessage.responses?.let {
+            ArrayList(it)
+        } ?: ArrayList()
+
+        apiMessage.response?.let {
+            messageResponses.add(it)
+        }
+
+        messageResponses.forEach { r ->
+            r.elements.forEach { element ->
+                if (element.type == ElementType.JSON && element.payload.json is JsonObject) {
+                    try {
+                        val event =
+                            chatbackendJson.decodeFromJsonElement<EmitEvent>(element.payload.json)
+                        val emitEvent = event.emitEvent
+                        Handler(Looper.getMainLooper()).post {
+                            publishEvent(emitEvent.type, emitEvent.detail)
+                        }
+                    } catch (e: SerializationException) {}
+                }
+            }
+        }
+    }
+
     fun startPolling() {
         pollTimer?.cancel()
 
@@ -600,7 +671,7 @@ object ChatBackend {
 
     fun publishResponse(message: APIMessage?, error: Exception?) {
         Handler(Looper.getMainLooper()).post {
-            observers.forEach { observer ->
+            messageObservers.forEach { observer ->
                 if (message != null) {
                     observer.get()?.onMessageReceived(this, message)
                 } else if (error != null) {
@@ -620,24 +691,37 @@ object ChatBackend {
         }
     }
 
+    fun publishEvent(type: String, detail: JsonElement?) {
+        Handler(Looper.getMainLooper()).post {
+            eventObservers.forEach { observer ->
+                observer.get()?.onBackendEventReceived(this, type, detail)
+            }
+        }
+    }
+
     fun createPostMessage(type: Type): CommandPost {
-        return CommandPost(conversationId, userToken, type)
+        return CommandPost(
+            conversationId,
+            userToken,
+            type,
+            skill = skill,
+            customPayload = customPayload)
     }
 
     fun addMessageObserver(observer: MessageObserver) {
-        observers.add(WeakReference(observer))
+        messageObservers.add(WeakReference(observer))
     }
 
     fun removeMessageObserver(observer: MessageObserver) {
         var remove: WeakReference<MessageObserver>? = null
-        observers.forEach {
+        messageObservers.forEach {
             if (it.get() == observer) {
                 remove = it
             }
         }
 
         if (remove != null) {
-            observers.remove(remove)
+            messageObservers.remove(remove)
         }
     }
 
@@ -655,6 +739,24 @@ object ChatBackend {
 
         if (remove != null) {
             configObservers.remove(remove)
+        }
+    }
+
+    fun addEventObserver(observer: EventObserver) {
+        eventObservers.add(WeakReference(observer))
+    }
+
+    fun removeEventObserver(observer: EventObserver) {
+        var remove: WeakReference<EventObserver>? = null
+
+        eventObservers.forEach {
+            if (it.get() == observer) {
+                remove = it
+            }
+        }
+
+        if (remove != null) {
+            eventObservers.remove(remove)
         }
     }
 
@@ -676,11 +778,15 @@ object ChatBackend {
         fun onFailure(backend: ChatBackend, error: Exception)
     }
 
+    interface EventObserver {
+        fun onBackendEventReceived(backend: ChatBackend, type: String, detail: JsonElement?)
+    }
+
     interface MessageObserver: SDKObserver {
         fun onMessageReceived(backend: ChatBackend, message: APIMessage)
     }
 
-    interface ConfigObserver: SDKObserver{
+    interface ConfigObserver: SDKObserver {
         fun onConfigReceived(backend: ChatBackend, config: ChatConfig)
     }
 }

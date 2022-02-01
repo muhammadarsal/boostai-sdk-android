@@ -29,8 +29,13 @@ interface ChatViewFragmentDelegate {
 
     fun getChatMessagePartFragment(element: Element,
                                    responseId: String?,
-                                   animated: Boolean = true): Fragment?
+                                   animated: Boolean = true): IChatMessagePartFragment?
 
     fun getSettingsFragment(): Fragment?
     fun getFeedbackFragment(): Fragment?
+}
+
+abstract class IChatMessagePartFragment(contentLayoutId: Int) : Fragment(contentLayoutId) {
+    abstract fun canRender(element: Element): Boolean
+    open fun showFeedbackButtons() {}
 }

@@ -16,6 +16,7 @@ import androidx.fragment.app.Fragment
 import com.bumptech.glide.Glide
 import no.boostai.sdk.ChatBackend.Objects.Response.GenericCard
 import no.boostai.sdk.R
+import no.boostai.sdk.UI.Events.BoostUIEvents
 
 open class ChatMessageGenericJSONFragment(var card: GenericCard? = null, val animated: Boolean = true) :
     Fragment(R.layout.chat_server_message_generic_json_fragment) {
@@ -68,6 +69,8 @@ open class ChatMessageGenericJSONFragment(var card: GenericCard? = null, val ani
                     it.data = Uri.parse(url)
                     startActivity(it)
                 }
+
+                BoostUIEvents.notifyObservers(BoostUIEvents.Event.externalLinkClicked, url)
             }
         }
         imageView.visibility = if (card?.image?.url.isNullOrEmpty()) View.GONE else View.VISIBLE

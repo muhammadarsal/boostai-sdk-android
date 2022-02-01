@@ -20,6 +20,8 @@
 package no.boostai.sdk.UI
 
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.Gravity
 import android.view.View
 import android.widget.ImageView
@@ -28,9 +30,9 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.bumptech.glide.Glide
 import no.boostai.sdk.ChatBackend.ChatBackend
-import no.boostai.sdk.ChatBackend.Objects.AvatarStyle
+import no.boostai.sdk.ChatBackend.Objects.AvatarShape
 import no.boostai.sdk.ChatBackend.Objects.ChatConfig
-import no.boostai.sdk.ChatBackend.Objects.ChatConfigDefaults
+import no.boostai.sdk.ChatBackend.Objects.ChatPanelDefaults
 import no.boostai.sdk.ChatBackend.Objects.Response.*
 import no.boostai.sdk.R
 import no.boostai.sdk.UI.Helpers.TimingHelper
@@ -111,20 +113,52 @@ open class ChatMessageFragment(
         }
 
         if (savedInstanceState == null) {
-            response?.elements?.forEachIndexed { index, element ->
-                val pace = ChatBackend.config?.pace ?: ChatConfigDefaults.pace
+            val fragments = response?.elements?.map { element ->
+                var messagePartFragment = delegate?.getChatMessagePartFragment(
+                    element,
+                    response?.id,
+                    animated
+                )
+
+                if (messagePartFragment == null || !messagePartFragment.canRender(element)) {
+                    messagePartFragment = getMessagePartFragment(element)
+                }
+
+                return@map if (messagePartFragment.canRender(element)) messagePartFragment else null
+            }?.filterNotNull()
+
+            fragments?.forEachIndexed { index, fragment ->
+                val pace = ChatBackend.config?.chatPanel?.styling?.pace
+                    ?: ChatPanelDefaults.Styling.pace
                 val paceFactor = TimingHelper.calculatePace(pace)
                 val staggerDelay = TimingHelper.calculateStaggerDelay(pace, 1)
                 val timeUntilReveal = if (isClient) 0 else TimingHelper.calcTimeToRead(paceFactor)
+                val hideMessageFeedback = customConfig?.chatPanel?.styling?.messageFeedback?.hide
+                    ?: ChatBackend.config?.chatPanel?.styling?.messageFeedback?.hide
+                    ?: ChatPanelDefaults.Styling.MessageFeedback.hide
 
                 if (animated)
                     Timer().schedule(timeUntilReveal * index) {
-                        addMessagePart(element, index)
-                        // If we have more elements to show, display a waiting indicator before showing it
-                        if (!isClient && index < (response?.elements?.size ?: 1) - 1)
-                            Timer().schedule(staggerDelay) { addWaitingIndicator() }
+                        Handler(Looper.getMainLooper()).post {
+                            addMessagePart(fragment, index)
+
+                            Timer().schedule(staggerDelay) {
+                                Handler(Looper.getMainLooper()).post {
+                                    // If we have more elements to show, display a waiting indicator before showing it
+                                    if (!isClient && index < fragments.size - 1)
+                                        addWaitingIndicator()
+                                    else if (!isClient && !isBlocked && !isWelcomeMessage && !hideMessageFeedback)
+                                        fragment.showFeedbackButtons()
+                                }
+                            }
+                        }
                     }
-                else addMessagePart(element, index)
+                else {
+                    addMessagePart(fragment, index)
+
+                    if (!isClient && !isBlocked && !isWelcomeMessage && !hideMessageFeedback && fragment is ChatMessagePartFragment)
+                        fragment.showFeedbackButtons()
+                }
             }
             if (isAwaitingFiles) {
                 val element = Element(
@@ -133,18 +167,31 @@ open class ChatMessageFragment(
                             Link(
                                 "upload",
                                 getString(R.string.upload_file),
-                                LinkType.action_link
+                                LinkType.ACTION_LINK
                             )
                         )
                     ),
-                    ElementType.links
+                    ElementType.LINKS
                 )
 
-                if (animated)
-                    Timer().schedule(
-                        TimingHelper.timeUntilReveal() * (response?.elements?.size ?: 0)
-                    ) { addMessagePart(element, response?.elements?.size ?: 0) }
-                else addMessagePart(element, response?.elements?.size ?: 0)
+                val index = fragments?.size ?: 0
+                val messagePartFragment = delegate?.getChatMessagePartFragment(
+                    element,
+                    response?.id,
+                    animated
+                ) ?: getMessagePartFragment(element)
+
+                messagePartFragment.let { fragment ->
+                    if (animated)
+                        Timer().schedule(
+                            TimingHelper.timeUntilReveal() * (fragments?.size ?: 0)
+                        ) {
+                            Handler(Looper.getMainLooper()).post {
+                                addMessagePart(fragment, index)
+                            }
+                        }
+                    else addMessagePart(fragment, index)
+                }
             }
             // If set, render a waiting indicator while waiting for server response
             if (isWaitingForServerResponse)
@@ -158,13 +205,13 @@ open class ChatMessageFragment(
         ChatBackend.addConfigObserver(this)
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
+    override fun onDestroyView() {
+        super.onDestroyView()
 
         ChatBackend.removeConfigObserver(this)
     }
 
-    fun addMessagePart(element: Element, index: Int) {
+    fun addMessagePart(fragment: Fragment, index: Int) {
         if (host == null) {
             return
         }
@@ -176,17 +223,12 @@ open class ChatMessageFragment(
             fragmentTransaction.remove(it)
         }
 
-        val fragment = delegate?.getChatMessagePartFragment(
-            element,
-            response?.id,
-            animated
-        ) ?: getMessagePartFragment(element, index)
-
         // Show the message
         fragmentTransaction.add(
             R.id.chat_message_parts,
             fragment
         )
+
         fragmentTransaction.commitAllowingStateLoss()
     }
 
@@ -201,14 +243,13 @@ open class ChatMessageFragment(
             .commitAllowingStateLoss()
     }
 
-    fun getMessagePartFragment(element: Element, index: Int): Fragment {
+    fun getMessagePartFragment(element: Element): IChatMessagePartFragment {
         return ChatMessagePartFragment(
             element,
             responseId = response?.id,
             isClient,
             isBlocked,
             isWelcomeMessage,
-            index == response?.elements?.size?.minus(if (isAwaitingFiles) 0 else 1) ?: -1,
             animated,
             customConfig
         )
@@ -220,8 +261,10 @@ open class ChatMessageFragment(
         if (config == null) return
 
         if (!isClient) {
-            val avatarStyle = customConfig?.avatarStyle ?: config.avatarStyle ?: ChatConfigDefaults.avatarStyle
-            imageView.background = if (avatarStyle == AvatarStyle.squared) null else ContextCompat.getDrawable(requireContext(), R.drawable.rounded)
+            val avatarShape = customConfig?.chatPanel?.styling?.avatarShape
+                ?: config.chatPanel?.styling?.avatarShape
+                ?: ChatPanelDefaults.Styling.avatarShape
+            imageView.background = if (avatarShape == AvatarShape.SQUARED) null else ContextCompat.getDrawable(requireContext(), R.drawable.rounded)
         }
     }
 

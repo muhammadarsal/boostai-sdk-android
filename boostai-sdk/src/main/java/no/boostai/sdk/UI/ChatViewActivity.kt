@@ -84,12 +84,14 @@ open class ChatViewActivity: AppCompatActivity(R.layout.chat_view_activity), Cha
     fun updateStyling(config: ChatConfig?) {
         if (config == null) return
 
-        @ColorInt val primaryColor = customConfig?.primaryColor ?: config.primaryColor
+        @ColorInt val primaryColor = customConfig?.chatPanel?.styling?.primaryColor
+            ?: config.chatPanel?.styling?.primaryColor
             ?: ContextCompat.getColor(this, R.color.primaryColor)
 
         supportActionBar?.setBackgroundDrawable(ColorDrawable(primaryColor))
 
-        val title = customConfig?.messages?.get(ChatBackend.languageCode)?.headerText
+        val title = customConfig?.chatPanel?.header?.title
+            ?: customConfig?.messages?.get(ChatBackend.languageCode)?.headerText
             ?: config.messages?.get(ChatBackend.languageCode)?.headerText
         supportActionBar?.title = title
         supportActionBar?.setDisplayShowTitleEnabled(title != null)

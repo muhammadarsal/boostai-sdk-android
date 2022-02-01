@@ -77,26 +77,33 @@ open class ChatServerWaitingFragment (var customConfig: ChatConfig? = null) :
         ChatBackend.addConfigObserver(this)
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
+    override fun onDestroyView() {
+        super.onDestroyView()
 
         ChatBackend.removeConfigObserver(this)
     }
 
     fun updateStyling(config: ChatConfig) {
-        @ColorInt val backgroundColor = customConfig?.serverMessageBackground
-            ?: config.serverMessageBackground
-            ?: ContextCompat.getColor(requireContext(), R.color.serverMessageBackground)
-        @ColorInt val textColor = customConfig?.serverMessageColor ?: config.serverMessageColor
-            ?: ContextCompat.getColor(requireContext(), R.color.serverMessageColor)
+        @ColorInt val typingBackgroundColor =
+            customConfig?.chatPanel?.styling?.chatBubbles?.typingBackgroundColor
+                ?: config.chatPanel?.styling?.chatBubbles?.typingBackgroundColor
+                ?: customConfig?.chatPanel?.styling?.chatBubbles?.vaBackgroundColor
+                ?: config.chatPanel?.styling?.chatBubbles?.vaBackgroundColor
+                ?: ContextCompat.getColor(requireContext(), R.color.vaBackgroundColor)
+        @ColorInt val typingDotColor =
+            customConfig?.chatPanel?.styling?.chatBubbles?.typingDotColor
+                ?: config.chatPanel?.styling?.chatBubbles?.typingDotColor
+                ?: customConfig?.chatPanel?.styling?.chatBubbles?.vaTextColor
+                ?: config.chatPanel?.styling?.chatBubbles?.vaTextColor
+                ?: ContextCompat.getColor(requireContext(), R.color.vaTextColor)
 
-        backgroundColor.let {
+        typingBackgroundColor.let {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
                 view?.background?.colorFilter =
                     BlendModeColorFilter(it, BlendMode.SRC_ATOP)
             else view?.background?.setColorFilter(it, PorterDuff.Mode.SRC_ATOP)
         }
-        textColor.let { color: Int ->
+        typingDotColor.let { color: Int ->
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
                 dots.forEach {
                     it?.background?.colorFilter = BlendModeColorFilter(color, BlendMode.SRC_ATOP)

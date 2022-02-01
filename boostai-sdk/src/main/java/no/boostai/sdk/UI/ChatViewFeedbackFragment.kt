@@ -38,6 +38,7 @@ import no.boostai.sdk.ChatBackend.ChatBackend
 import no.boostai.sdk.ChatBackend.Objects.ChatConfig
 import no.boostai.sdk.ChatBackend.Objects.FeedbackValue
 import no.boostai.sdk.R
+import no.boostai.sdk.UI.Events.BoostUIEvents
 
 open class ChatViewFeedbackFragment(
     var settingsDelegate: ChatViewSettingsDelegate? = null,
@@ -121,8 +122,8 @@ open class ChatViewFeedbackFragment(
         ChatBackend.addConfigObserver(this)
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
+    override fun onDestroyView() {
+        super.onDestroyView()
 
         ChatBackend.removeConfigObserver(this)
     }
@@ -155,14 +156,14 @@ open class ChatViewFeedbackFragment(
     }
 
     fun userGavePositiveFeedback(sender: ImageButton) =
-        setFeedbackValue(FeedbackValue.positive, sender)
+        setFeedbackValue(FeedbackValue.POSITIVE, sender)
 
     fun userGaveNegativeFeedback(sender: ImageButton) =
-        setFeedbackValue(FeedbackValue.negative, sender)
+        setFeedbackValue(FeedbackValue.NEGATIVE, sender)
 
     fun setFeedbackValue(feedbackValue: FeedbackValue, sender: ImageButton) {
         when (feedbackValue) {
-            FeedbackValue.positive -> {
+            FeedbackValue.POSITIVE -> {
                 thumbsUpButton.setImageDrawable(
                     ContextCompat.getDrawable(requireContext(), R.drawable.ic_thumbs_up_filled)
                 )
@@ -172,7 +173,7 @@ open class ChatViewFeedbackFragment(
                 thumbsUpButton.alpha = 1.0f
                 thumbsDownButton.alpha = 0.5f
             }
-            FeedbackValue.negative -> {
+            FeedbackValue.NEGATIVE -> {
                 thumbsUpButton.setImageDrawable(
                     ContextCompat.getDrawable(requireContext(), R.drawable.ic_thumbs_up)
                 )
@@ -184,9 +185,20 @@ open class ChatViewFeedbackFragment(
             }
             else -> {}
         }
-        ChatBackend.conversationFeedback(
-            if (feedbackValue == FeedbackValue.positive) 1 else -1, feedbackEditText.text.toString()
-        )
+
+        val rating = if (feedbackValue == FeedbackValue.POSITIVE) 1 else -1
+        val feedbackText = feedbackEditText.text.toString()
+        ChatBackend.conversationFeedback(rating, feedbackText)
+
+        // Publish events
+        val event = if (rating > 0) BoostUIEvents.Event.positiveConversationFeedbackGiven else
+            BoostUIEvents.Event.negativeConversationFeedbackGiven
+        BoostUIEvents.notifyObservers(event)
+
+        if (feedbackText.isNotEmpty()) {
+            BoostUIEvents.notifyObservers(BoostUIEvents.Event.conversationFeedbackTextGiven)
+        }
+
         this.feedbackValue = feedbackValue
         feedbackState = FeedbackState.PROMPT_FOR_TEXT
         updateState()
@@ -195,9 +207,17 @@ open class ChatViewFeedbackFragment(
     fun submitFeedback() {
         if (feedbackValue == null) return
 
-        ChatBackend.conversationFeedback(
-            if (feedbackValue == FeedbackValue.positive) 1 else -1, feedbackEditText.text.toString()
-        )
+        val rating = if (feedbackValue == FeedbackValue.POSITIVE) 1 else -1
+        val feedbackText = feedbackEditText.text.toString()
+        ChatBackend.conversationFeedback(rating, feedbackText)
+
+        // Publish events
+        val event = if (rating > 0) BoostUIEvents.Event.positiveConversationFeedbackGiven else BoostUIEvents.Event.negativeConversationFeedbackGiven
+        BoostUIEvents.notifyObservers(event)
+
+        if (feedbackText.isNotEmpty()) {
+            BoostUIEvents.notifyObservers(BoostUIEvents.Event.conversationFeedbackTextGiven)
+        }
 
         if (isDialog && settingsDelegate != null) {
             settingsDelegate?.closeChat()
@@ -227,9 +247,11 @@ open class ChatViewFeedbackFragment(
     fun updateStyling(config: ChatConfig?) {
         if (config == null) return
 
-        @ColorInt val primaryColor = customConfig?.primaryColor ?: config.primaryColor
+        @ColorInt val primaryColor = customConfig?.chatPanel?.styling?.primaryColor
+            ?: config.chatPanel?.styling?.primaryColor
             ?: ContextCompat.getColor(requireContext(), R.color.primaryColor)
-        @ColorInt val contrastColor = customConfig?.contrastColor ?: config.contrastColor
+        @ColorInt val contrastColor = customConfig?.chatPanel?.styling?.contrastColor
+            ?: config.chatPanel?.styling?.contrastColor
             ?: ContextCompat.getColor(requireContext(), R.color.contrastColor)
         val messages = config.messages?.get(ChatBackend.languageCode)
 

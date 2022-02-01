@@ -29,11 +29,16 @@ import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentPagerAdapter
 import androidx.viewpager.widget.ViewPager
 import com.google.android.material.tabs.TabLayout
+import kotlinx.serialization.json.JsonElement
 import no.boostai.sdk.ChatBackend.ChatBackend
-import no.boostai.sdk.ChatBackend.Objects.ChatConfig
+import no.boostai.sdk.ChatBackend.Objects.*
+import no.boostai.sdk.UI.Events.BoostUIEvents
 import no.boostai.sdk.UI.ChatViewFragment
 
-class MainActivity : AppCompatActivity(R.layout.activity_main), ChatBackend.ConfigObserver {
+class MainActivity : AppCompatActivity(R.layout.activity_main),
+    ChatBackend.ConfigObserver,
+    BoostUIEvents.Observer,
+    ChatBackend.EventObserver {
 
     private var toolbar: Toolbar? = null
     private var viewPager: ViewPager? = null
@@ -41,6 +46,29 @@ class MainActivity : AppCompatActivity(R.layout.activity_main), ChatBackend.Conf
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        ChatBackend.domain = "sdk.boost.ai"
+
+        val customConfig = ChatConfig(
+            chatPanel = ChatPanel(
+                styling = Styling(
+                    // Style colors etc.
+                    /*primaryColor = getColor(android.R.color.holo_red_dark),
+                    contrastColor = getColor(android.R.color.holo_orange_light),
+                    chatBubbles = ChatBubbles(
+                        vaTextColor = getColor(android.R.color.white),
+                        vaBackgroundColor = getColor(android.R.color.holo_green_dark)
+                    ),
+                    buttons = Buttons(
+                        multiline = true
+                    )*/
+                ),
+                settings = Settings(
+                    //conversationId = "[pass a stored conversationId here to resume conversation]",
+                    //startLanguage = "[set preferred BCP47 language for welcome message, i.e. en-US]"
+                )
+            )
+        )
 
         toolbar = findViewById(R.id.toolbar)
         viewPager = findViewById(R.id.view_pager)
@@ -51,35 +79,45 @@ class MainActivity : AppCompatActivity(R.layout.activity_main), ChatBackend.Conf
         // Create viewPager adapter
         val adapter = ViewPagerAdapter(supportFragmentManager)
 
-        adapter.addFragment(FloatingAvatarFragment(), "Floating")
-        adapter.addFragment(ChatViewFragment(), "Fullscreen")
+        adapter.addFragment(
+            ChatViewFragment(customConfig = customConfig),
+            "Fullscreen"
+        )
+
+        adapter.addFragment(
+            FloatingAvatarFragment(customConfig = customConfig),
+            "Floating"
+        )
+
         tabLayout?.setupWithViewPager(viewPager)
         viewPager?.adapter = adapter
-        ChatBackend.domain = "sdk.boost.ai"
-        ChatBackend.languageCode =
-            "no-NO" // Default value – will potentially be overridden by the backend config
+
         setSupportActionBar(toolbar)
 
         updateStyling(ChatBackend.config)
         ChatBackend.addConfigObserver(this)
+        ChatBackend.addEventObserver(this)
+        BoostUIEvents.addObserver(this)
     }
 
     override fun onDestroy() {
         super.onDestroy()
 
         ChatBackend.removeConfigObserver(this)
+        ChatBackend.removeEventObserver(this)
+        BoostUIEvents.removeObserver(this)
     }
 
     internal class ViewPagerAdapter(manager: FragmentManager) :
         FragmentPagerAdapter(manager, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT) {
 
         private var fragments: ArrayList<Fragment> = ArrayList()
-        private var fragmentTitles: ArrayList<String> = ArrayList();
+        private var fragmentTitles: ArrayList<String> = ArrayList()
 
         // Add fragment to the viewPager
         fun addFragment(fragment: Fragment, title: String) {
-            fragments.add(fragment);
-            fragmentTitles.add(title);
+            fragments.add(fragment)
+            fragmentTitles.add(title)
         }
 
         override fun getPageTitle(position: Int): CharSequence = fragmentTitles[position]
@@ -92,14 +130,14 @@ class MainActivity : AppCompatActivity(R.layout.activity_main), ChatBackend.Conf
     private fun updateStyling(config: ChatConfig?) {
         if (config == null) return
 
-        config.primaryColor?.let {
+        config.chatPanel?.styling?.primaryColor?.let {
             val primaryColorDrawable = ColorDrawable(it)
             toolbar?.background = primaryColorDrawable
             tabLayout?.background = primaryColorDrawable
             viewPager?.background = primaryColorDrawable
         }
 
-        config.contrastColor?.let { contrastColor ->
+        config.chatPanel?.styling?.contrastColor?.let { contrastColor ->
             tabLayout?.tabTextColors = ColorStateList.valueOf(contrastColor)
             tabLayout?.setSelectedTabIndicatorColor(contrastColor)
         }
@@ -110,5 +148,13 @@ class MainActivity : AppCompatActivity(R.layout.activity_main), ChatBackend.Conf
     }
 
     override fun onFailure(backend: ChatBackend, error: Exception) {}
+
+    override fun onBackendEventReceived(backend: ChatBackend, type: String, detail: JsonElement?) {
+        println("Boost backend event: $type, detail: $detail")
+    }
+
+    override fun onUIEventReceived(event: BoostUIEvents.Event, detail: Any?) {
+        println("Boost UI event: $event, detail: $detail");
+    }
 
 }

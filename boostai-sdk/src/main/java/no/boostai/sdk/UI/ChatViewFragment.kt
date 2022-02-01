@@ -22,7 +22,6 @@ package no.boostai.sdk.UI
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.ColorStateList
-import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.text.*
 import android.text.style.ForegroundColorSpan
@@ -35,12 +34,15 @@ import androidx.core.graphics.drawable.DrawableCompat
 import androidx.fragment.app.Fragment
 import no.boostai.sdk.ChatBackend.ChatBackend
 import no.boostai.sdk.ChatBackend.Objects.ChatConfig
-import no.boostai.sdk.ChatBackend.Objects.ChatConfigDefaults
+import no.boostai.sdk.ChatBackend.Objects.ChatPanelDefaults
+import no.boostai.sdk.ChatBackend.Objects.CommandResume
+import no.boostai.sdk.ChatBackend.Objects.CommandStart
 import no.boostai.sdk.ChatBackend.Objects.Response.APIMessage
 import no.boostai.sdk.ChatBackend.Objects.Response.ChatStatus
 import no.boostai.sdk.ChatBackend.Objects.Response.Response
 import no.boostai.sdk.ChatBackend.Objects.Response.SourceType
 import no.boostai.sdk.R
+import no.boostai.sdk.UI.Events.BoostUIEvents
 import no.boostai.sdk.UI.Helpers.TimingHelper
 import java.util.*
 import kotlin.collections.ArrayList
@@ -56,6 +58,7 @@ open class ChatViewFragment(
     ChatBackend.ConfigObserver,
     ChatViewSettingsDelegate {
 
+    val conversationIdKey = "conversationId"
     val isDialogKey = "isDialog"
     val customConfigKey = "customConfig"
     val delegateKey = "delegate"
@@ -65,6 +68,7 @@ open class ChatViewFragment(
     val responsesKey = "responses"
     val isBlockedKey = "isBlocked"
     val isSecureChatKey = "isSecureChat"
+    val storedConversationIdKey = "conversationId"
     
     val errorId = "error"
     val settingsFragmentId = "settings"
@@ -76,21 +80,31 @@ open class ChatViewFragment(
     lateinit var characterCountTextView: TextView
     lateinit var characterCountWrapper: FrameLayout
     lateinit var scrollView: ScrollView
+    lateinit var chatInputWrapper: FrameLayout
+    lateinit var chatInputWrapperTopBorder: FrameLayout
+    lateinit var chatInputInner: LinearLayout
     lateinit var chatMessagesLayout: LinearLayout
+    lateinit var chatInputOutline: FrameLayout
     lateinit var chatInputBorder: FrameLayout
     var lastAvatarURL: String? = null
     var maxCharacterCount = 110
     var messages: ArrayList<APIMessage> = ArrayList()
     var responses: ArrayList<Response> = ArrayList()
     var waitingForAgentResponseFragmentTags: ArrayList<String> = ArrayList()
+    var animateMessages = true
     var isBlocked = false
     var isSecureChat = false
+    var conversationReference: String? = null
+    var conversationId: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        conversationId = customConfig?.chatPanel?.settings?.conversationId
+
         val bundle = savedInstanceState ?: arguments
         bundle?.let {
+            conversationId = conversationId ?: it.getString(conversationId)
             isDialog = it.getBoolean(isDialogKey)
             customConfig = it.getParcelable(customConfigKey)
             // TODO: Parcelable delegate?
@@ -104,12 +118,14 @@ open class ChatViewFragment(
             isSecureChat = it.getBoolean(isSecureChatKey)
         }
 
+        setBackendProperties()
+
         ChatBackend.addConfigObserver(this)
         ChatBackend.addMessageObserver(this)
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
+    override fun onDestroyView() {
+        super.onDestroyView()
 
         ChatBackend.removeConfigObserver(this)
         ChatBackend.removeMessageObserver(this)
@@ -118,6 +134,7 @@ open class ChatViewFragment(
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
 
+        outState.putString(conversationIdKey, conversationId)
         outState.putBoolean(isDialogKey, isDialog)
         outState.putParcelable(customConfigKey, customConfig)
         outState.putString(lastAvatarUrlKey, lastAvatarURL)
@@ -139,7 +156,15 @@ open class ChatViewFragment(
         characterCountWrapper = view.findViewById(R.id.chat_input_character_count_wrapper)
         scrollView = view.findViewById(R.id.chat_messages_scrollview)
         chatMessagesLayout = view.findViewById(R.id.chat_messages)
+        chatInputWrapper = view.findViewById(R.id.chat_input_wrapper)
+        chatInputWrapperTopBorder = view.findViewById(R.id.chat_input_wrapper_top_border)
+        chatInputOutline = view.findViewById(R.id.chat_input_outline)
         chatInputBorder = view.findViewById(R.id.chat_input_border)
+        chatInputInner = view.findViewById(R.id.chat_input_inner)
+
+        chatInputInner.background.setTint(
+            ContextCompat.getColor(requireContext(), android.R.color.white)
+        )
 
         scrollView.isSmoothScrollingEnabled = true
         editText.addTextChangedListener(object : TextWatcher {
@@ -172,17 +197,44 @@ open class ChatViewFragment(
         })
         editText.onFocusChangeListener = View.OnFocusChangeListener { _, hasFocus ->
             // Update chat input color
-            var color = customConfig?.primaryColor ?: ChatBackend.config?.primaryColor
+            val primaryColor = customConfig?.chatPanel?.styling?.primaryColor
+                ?: ChatBackend.config?.chatPanel?.styling?.primaryColor
                 ?: ContextCompat.getColor(requireContext(), R.color.primaryColor)
+            val textareaBorderColor = customConfig?.chatPanel?.styling?.composer?.textareaBorderColor
+                ?: ChatBackend.config?.chatPanel?.styling?.composer?.textareaBorderColor
+                ?: ContextCompat.getColor(requireContext(), R.color.gray)
+            val textareaFocusBorderColor = customConfig?.chatPanel?.styling?.composer?.textareaFocusBorderColor
+                ?: ChatBackend.config?.chatPanel?.styling?.composer?.textareaFocusBorderColor
+                ?: primaryColor
+            val textareaFocusOutlineColor =
+                customConfig?.chatPanel?.styling?.composer?.textareaFocusOutlineColor
+                    ?: ChatBackend.config?.chatPanel?.styling?.composer?.textareaFocusOutlineColor
+                    ?: (primaryColor and 0x00FFFFFF or 0x77000000)
+            val defaultTopBorderColor = customConfig?.chatPanel?.styling?.composer?.topBorderColor
+                ?: ChatBackend.config?.chatPanel?.styling?.composer?.topBorderColor
+                ?: ContextCompat.getColor(requireContext(), R.color.gray)
+            val topBorderFocusColor = customConfig?.chatPanel?.styling?.composer?.topBorderFocusColor
+                ?: ChatBackend.config?.chatPanel?.styling?.composer?.topBorderFocusColor
+                ?: defaultTopBorderColor
+
+            val outlineColor: Int
+            val borderColor: Int
+            val topBorderColor: Int
 
             if (hasFocus) {
-                color = color and 0x00FFFFFF or 0x77000000 // Set opacity
+                outlineColor = textareaFocusOutlineColor
+                borderColor = textareaFocusBorderColor
+                topBorderColor = topBorderFocusColor
             } else {
-                color = color and 0x00FFFFFF // Transparent
+                outlineColor = textareaFocusOutlineColor and 0x00FFFFFF // Transparent
+                borderColor = textareaBorderColor
+                topBorderColor = defaultTopBorderColor
             }
 
-            val gradientDrawable = chatInputBorder.background as GradientDrawable
-            gradientDrawable.setColor(color)// Update chat input color
+            chatInputOutline.background.setTint(outlineColor)
+            chatInputBorder.background.setTint(borderColor)
+            chatInputWrapperTopBorder.setBackgroundColor(topBorderColor)
+
         }
         submitButton.setOnClickListener {
             val text = editText.text.toString().trim()
@@ -199,12 +251,24 @@ open class ChatViewFragment(
 
             override fun onReady(config: ChatConfig) {
                 updateStyling(config)
-                startConversation()
+                setBackendProperties(config)
+
+                // Should we resume a stored/remembered conversation?
+                val rememberConversation = customConfig?.chatPanel?.settings?.rememberConversation
+                    ?: ChatBackend.config?.chatPanel?.settings?.rememberConversation
+                    ?: ChatPanelDefaults.Settings.rememberConversation
+                if (conversationId == null && rememberConversation) {
+                    conversationId = getStoredConversationId()
+                }
+
+                startOrResumeConversation(conversationId)
             }
         })
+
+        updateStyling()
     }
 
-    fun startConversation() {
+    fun startOrResumeConversation(conversationId: String? = null) {
         val messages = ChatBackend.messages
 
         setIsBlocked(ChatBackend.isBlocked)
@@ -213,7 +277,44 @@ open class ChatViewFragment(
         // Start new conversation if no messages exists
         if (messages.size == 0) {
             showWaitingForAgentResponseIndicator()
-            ChatBackend.start()
+            if (conversationId != null) {
+                // Make sure we don't animate in the message when resuming a conversation
+                animateMessages = false
+
+                ChatBackend.resume(CommandResume(conversationId), object : ChatBackend.APIMessageResponseListener {
+                    override fun onFailure(exception: Exception) {
+                        animateMessages = true
+
+                        val startNewMessage =
+                            customConfig?.chatPanel?.settings?.startNewConversationOnResumeFailure
+                                ?: ChatPanelDefaults.Settings.startNewConversationOnResumeFailure
+                        if (startNewMessage) {
+                            ChatBackend.start(
+                                CommandStart(
+                                    language = customConfig?.chatPanel?.settings?.startLanguage,
+                                    contextIntentId = customConfig?.chatPanel?.settings?.contextTopicIntentId,
+                                    triggerAction = customConfig?.chatPanel?.settings?.startTriggerActionId,
+                                    authTriggerAction = customConfig?.chatPanel?.settings?.authStartTriggerActionId,
+                                )
+                            )
+                        }
+                    }
+
+                    override fun onResponse(apiMessage: APIMessage) {
+                        // Enable animation of new messages (conversation has been resumed at this point)
+                        animateMessages = true
+                    }
+                })
+            } else {
+                ChatBackend.start(
+                    CommandStart(
+                        language = customConfig?.chatPanel?.settings?.startLanguage,
+                        contextIntentId = customConfig?.chatPanel?.settings?.contextTopicIntentId,
+                        triggerAction = customConfig?.chatPanel?.settings?.startTriggerActionId,
+                        authTriggerAction = customConfig?.chatPanel?.settings?.authStartTriggerActionId,
+                    )
+                )
+            }
         } else
             // Scroll to bottom after x ms
             Timer().schedule(200) { scrollToBottom() }
@@ -233,11 +334,12 @@ open class ChatViewFragment(
 
     override fun onMessageReceived(backend: ChatBackend, message: APIMessage) {
         setIsBlocked(ChatBackend.isBlocked)
-        handleReceivedMessage(message)
+        handleReceivedMessage(message, animateMessages)
     }
 
     override fun onConfigReceived(backend: ChatBackend, config: ChatConfig) {
         updateStyling(config)
+        setBackendProperties(config)
         activity?.invalidateOptionsMenu()
     }
 
@@ -253,32 +355,46 @@ open class ChatViewFragment(
         messages.add(message)
         message.response?.let { messageResponses.add(it) }
 
+        // Save conversation id if applicable
+        val rememberConversation = customConfig?.chatPanel?.settings?.rememberConversation
+            ?: ChatBackend.config?.chatPanel?.settings?.rememberConversation
+            ?: ChatPanelDefaults.Settings.rememberConversation
+        if (rememberConversation) {
+            message.conversation?.id.let {
+                storeConversationId(it)
+            }
+        }
+
         messageResponses.forEachIndexed { index, response ->
             // Add it to our response list
             responses.add(response)
             // Store the last avatar URL for later re-use
             lastAvatarURL = response.avatarUrl ?: lastAvatarURL
+
+            val firstNonBlockedMessageIndex = messages.indexOfFirst { (conversation) ->
+                !(conversation?.state?.isBlocked ?: false)
+            }
+            val messageFeedbackOnFirstAction =
+                customConfig?.chatPanel?.settings?.messageFeedbackOnFirstAction
+                    ?: ChatPanelDefaults.Settings.messageFeedbackOnFirstAction
+            val isWelcomeMessage = messages.indexOf(message) <= firstNonBlockedMessageIndex
+
             // Render the response
             render(
                 response,
                 animated,
-                !(
-                    messages.indexOf(message) >
-                        messages.indexOfFirst {
-                            (conversation) -> conversation?.state?.isBlocked == null
-                        }
-                ),
+                !messageFeedbackOnFirstAction && isWelcomeMessage,
                 message.conversation?.state?.awaitingFiles != null &&
                     index == messageResponses.size - 1
             )
             // Are we waiting for an agent response? Show a "waiting view"
             val chatStatus =
                 ChatBackend.lastResponse?.conversation?.state?.chatStatus ?:
-                    ChatStatus.virtual_agent
+                    ChatStatus.VIRTUAL_AGENT
 
             if (
-                response.source == SourceType.client &&
-                    chatStatus == ChatStatus.virtual_agent && animated
+                response.source == SourceType.CLIENT &&
+                    chatStatus == ChatStatus.VIRTUAL_AGENT && animated
             )
                 showWaitingForAgentResponseIndicator()
             else hideWaitingForAgentResponseIndicator()
@@ -287,7 +403,7 @@ open class ChatViewFragment(
                 message.conversation?.state?.authenticatedUserId != null ||
                     (
                         isSecureChat && messageResponses.size > 0 &&
-                            messageResponses[0].source == SourceType.client
+                            messageResponses[0].source == SourceType.CLIENT
                     )
 
             secureChatWrapper.visibility = if (isSecure) View.VISIBLE else View.GONE
@@ -304,20 +420,109 @@ open class ChatViewFragment(
         } else {
             hideHumanTypingIndicator()
         }
+
+        message.conversation?.id?.let { newConversationId ->
+            if (conversationId != newConversationId) {
+                BoostUIEvents.notifyObservers(BoostUIEvents.Event.conversationIdChanged, newConversationId)
+                conversationId = newConversationId
+            }
+        }
+
+        message.conversation?.reference?.let { newReference ->
+            if (conversationReference != newReference) {
+                conversationReference = newReference
+                BoostUIEvents.notifyObservers(BoostUIEvents.Event.conversationReferenceChanged, newReference)
+            }
+        }
+    }
+
+    fun storeConversationId(conversationId: String?) {
+        val sharedPref = activity?.getPreferences(Context.MODE_PRIVATE) ?: return
+        with (sharedPref.edit()) {
+            putString(storedConversationIdKey, conversationId)
+            apply()
+        }
+    }
+
+    fun getStoredConversationId(): String? {
+        val sharedPref = activity?.getPreferences(Context.MODE_PRIVATE) ?: return null
+        return sharedPref.getString(storedConversationIdKey, null)
     }
 
     fun submitText(text: String) {
         ChatBackend.message(text)
+        BoostUIEvents.notifyObservers(BoostUIEvents.Event.messageSent)
+
         // Update view state
         editText.setText("")
         updateInputStates("")
     }
 
-    fun updateStyling(config: ChatConfig?) {
-        if (config == null) return
-
+    fun updateStyling(config: ChatConfig? = null) {
         updateTranslatedMessages(config)
         updateSubmitButtonState()
+
+        val hide = customConfig?.chatPanel?.styling?.composer?.hide
+            ?: config?.chatPanel?.styling?.composer?.hide
+            ?: ChatPanelDefaults.Styling.Composer.hide
+        chatInputWrapper.visibility = if (hide) View.GONE else View.VISIBLE
+
+        val frameBackgroundColor = customConfig?.chatPanel?.styling?.composer?.frameBackgroundColor
+            ?: config?.chatPanel?.styling?.composer?.frameBackgroundColor
+        frameBackgroundColor?.let {
+            chatInputWrapper.setBackgroundColor(it)
+        }
+
+        val composeLengthColor = customConfig?.chatPanel?.styling?.composer?.composeLengthColor
+            ?: config?.chatPanel?.styling?.composer?.composeLengthColor
+        composeLengthColor?.let {
+            characterCountTextView.setTextColor(it)
+        }
+
+        val textareaBackgroundColor = customConfig?.chatPanel?.styling?.composer?.textareaBackgroundColor
+            ?: config?.chatPanel?.styling?.composer?.textareaBackgroundColor
+            ?: ContextCompat.getColor(requireContext(), android.R.color.white)
+        chatInputInner.background.setTint(textareaBackgroundColor)
+
+        val textareaBorderColor = customConfig?.chatPanel?.styling?.composer?.textareaBorderColor
+            ?: config?.chatPanel?.styling?.composer?.textareaBorderColor
+            ?: ContextCompat.getColor(requireContext(), R.color.gray)
+        chatInputBorder.background.setTint(textareaBorderColor)
+
+        val textareaTextColor = customConfig?.chatPanel?.styling?.composer?.textareaTextColor
+            ?: config?.chatPanel?.styling?.composer?.textareaTextColor
+        textareaTextColor?.let {
+            editText.setTextColor(it)
+        }
+
+        val textareaPlaceholderTextColor = customConfig?.chatPanel?.styling?.composer?.textareaPlaceholderTextColor
+            ?: config?.chatPanel?.styling?.composer?.textareaPlaceholderTextColor
+        textareaPlaceholderTextColor?.let {
+            editText.setHintTextColor(it)
+        }
+
+        val topBorderColor = customConfig?.chatPanel?.styling?.composer?.topBorderColor
+            ?: config?.chatPanel?.styling?.composer?.topBorderColor
+            ?: ContextCompat.getColor(requireContext(), R.color.gray)
+        chatInputWrapperTopBorder.setBackgroundColor(topBorderColor)
+
+        val panelBackgroundColor = customConfig?.chatPanel?.styling?.panelBackgroundColor
+            ?: config?.chatPanel?.styling?.panelBackgroundColor
+        panelBackgroundColor?.let {
+            chatMessagesLayout.setBackgroundColor(panelBackgroundColor)
+            scrollView.setBackgroundColor(panelBackgroundColor)
+        }
+    }
+
+    fun setBackendProperties(config: ChatConfig? = null) {
+        val fileUploadServiceEndpointUrl =
+            customConfig?.chatPanel?.settings?.fileUploadServiceEndpointUrl
+                ?: config?.chatPanel?.settings?.fileUploadServiceEndpointUrl
+        val userToken = customConfig?.chatPanel?.settings?.userToken
+            ?: config?.chatPanel?.settings?.userToken
+
+        fileUploadServiceEndpointUrl?.let { ChatBackend.fileUploadServiceEndpointUrl = it }
+        userToken?.let { ChatBackend.userToken = it }
     }
 
     fun updateTranslatedMessages(config: ChatConfig?) {
@@ -342,13 +547,19 @@ open class ChatViewFragment(
 
     fun updateSubmitButtonState(text: String? = null) {
         val currentText = text ?: editText.text.toString()
-        val primaryColor = customConfig?.primaryColor ?: ChatBackend.config?.primaryColor
+        val primaryColor = customConfig?.chatPanel?.styling?.primaryColor
+            ?: ChatBackend.config?.chatPanel?.styling?.primaryColor
             ?: ContextCompat.getColor(requireContext(), R.color.primaryColor)
+        val sendButtonColor = customConfig?.chatPanel?.styling?.composer?.sendButtonColor
+            ?: ChatBackend.config?.chatPanel?.styling?.composer?.sendButtonColor ?: primaryColor
+        val sendButtonDisabledColor = customConfig?.chatPanel?.styling?.composer?.sendButtonDisabledColor
+            ?: ChatBackend.config?.chatPanel?.styling?.composer?.sendButtonDisabledColor
+            ?: ContextCompat.getColor(requireContext(), R.color.gray)
         val isEnabled = currentText.trim().isNotEmpty() && !isBlocked
 
         submitButton.isEnabled = isEnabled
         submitButton.backgroundTintList = ColorStateList.valueOf(
-            if (isEnabled) primaryColor else ContextCompat.getColor(requireContext(), R.color.gray)
+            if (isEnabled) sendButtonColor else sendButtonDisabledColor
         )
     }
 
@@ -363,7 +574,7 @@ open class ChatViewFragment(
                 getMessageFragment(
                     response,
                     animated,
-                    response.source == SourceType.client,
+                    response.source == SourceType.CLIENT,
                     isWelcomeMessage,
                     isAwaitingFiles
                 )
@@ -377,7 +588,8 @@ open class ChatViewFragment(
                 )
                 .commitAllowingStateLoss()
             if (animated) {
-                val pace = ChatBackend.config?.pace ?: ChatConfigDefaults.pace
+                val pace = ChatBackend.config?.chatPanel?.styling?.pace
+                    ?: ChatPanelDefaults.Styling.pace
                 val paceFactor = TimingHelper.calculatePace(pace)
                 val staggerDelay = TimingHelper.calculateStaggerDelay(pace, 1)
                 val timeUntilReveal = TimingHelper.calcTimeToRead(paceFactor)
@@ -505,7 +717,8 @@ open class ChatViewFragment(
 
         inflater.inflate(R.menu.chat_toolbar_menu, menu)
 
-        @ColorInt val tintColor = customConfig?.contrastColor ?: ChatBackend.config?.contrastColor
+        @ColorInt val tintColor = customConfig?.chatPanel?.styling?.contrastColor
+            ?: ChatBackend.config?.chatPanel?.styling?.contrastColor
             ?: ContextCompat.getColor(requireContext(), R.color.contrastColor)
 
         // Set correct color on settings item
@@ -536,7 +749,9 @@ open class ChatViewFragment(
         // Add filters as a submenu
         val filterMenu = filterItem.subMenu
         filterMenu.clear()
-        ChatBackend.config?.filters?.forEach { filterMenu.add(0, it.id, Menu.NONE, it.title) }
+        ChatBackend.config?.chatPanel?.header?.filters?.options?.forEach {
+            filterMenu.add(0, it.id, Menu.NONE, it.title)
+        }
 
         // Only show the filter selector if we have any filters
         filterItem.isVisible = filterMenu.size() > 0
@@ -552,11 +767,18 @@ open class ChatViewFragment(
             R.id.action_settings -> toggleSettingsFragment()
             R.id.action_filter -> {}
             R.id.action_close -> closeChatWithFeedback()
-            R.id.action_minimize -> activity?.finish()
+            R.id.action_minimize -> {
+                activity?.finish()
+                BoostUIEvents.notifyObservers(BoostUIEvents.Event.chatPanelMinimized)
+            }
             else -> {
                 // Submenu was clicked
-                ChatBackend.filter = ChatBackend.config?.filters?.find { it.id == item.itemId }
+                val filter = ChatBackend.config?.chatPanel?.header?.filters?.options?.find {
+                    it.id == item.itemId
+                }
+                ChatBackend.filter = filter
                 requireActivity().invalidateOptionsMenu()
+                BoostUIEvents.notifyObservers(BoostUIEvents.Event.filterValuesChanged, filter?.values)
             }
         }
 
@@ -564,11 +786,16 @@ open class ChatViewFragment(
     }
 
     override fun deleteConversation() {
+        // Conversation ID will be reset on deletion, so we save this for event publishing purposes
+        val existingConversationId = ChatBackend.conversationId
+
         ChatBackend.delete(null, object : ChatBackend.APIMessageResponseListener {
 
             override fun onFailure(exception: java.lang.Exception) {}
 
             override fun onResponse(apiMessage: APIMessage) {
+                BoostUIEvents.notifyObservers(BoostUIEvents.Event.conversationDeleted, existingConversationId)
+
                 // Remove all message fragments
                 val transaction = childFragmentManager.beginTransaction()
 
@@ -583,7 +810,8 @@ open class ChatViewFragment(
                 // Hide menu
                 hideMenu()
                 // Start a new conversation
-                startConversation()
+                conversationId = null
+                startOrResumeConversation()
             }
 
         })
@@ -599,6 +827,8 @@ open class ChatViewFragment(
                 settingsFragmentId
             )
             .commitAllowingStateLoss()
+
+        BoostUIEvents.notifyObservers(BoostUIEvents.Event.menuOpened)
     }
 
     override fun hideMenu() {
@@ -614,6 +844,8 @@ open class ChatViewFragment(
                     .commitAllowingStateLoss()
             }
         }
+
+        BoostUIEvents.notifyObservers(BoostUIEvents.Event.menuClosed)
     }
 
     override fun showFeedback() {
@@ -643,12 +875,16 @@ open class ChatViewFragment(
         }
     }
 
-    override fun closeChat() { activity?.finish() }
+    override fun closeChat() {
+        activity?.finish()
+        BoostUIEvents.notifyObservers(BoostUIEvents.Event.chatPanelClosed)
+    }
 
     fun closeChatWithFeedback() {
         // If the feedback window is open and the user taps X again, close the dialog
         val feedbackFragment = childFragmentManager.findFragmentByTag(feedbackFragmentId)
         if (feedbackFragment != null) {
+            BoostUIEvents.notifyObservers(BoostUIEvents.Event.chatPanelClosed)
             activity?.finish();
             return;
         }
@@ -657,17 +893,21 @@ open class ChatViewFragment(
         val hasClientMessages = ChatBackend.messages.filter { apiMessage ->
             val source = apiMessage.response?.source
                 ?: apiMessage.responses?.first()?.source
-                ?: SourceType.bot
+                ?: SourceType.BOT
 
-            source == SourceType.client
+            source == SourceType.CLIENT
         }.isNotEmpty()
 
-        val requestConversationFeedback = ChatBackend.config?.requestConversationFeedback ?: ChatConfigDefaults.requestConversationFeedback
+        val requestConversationFeedback =
+            ChatBackend.config?.chatPanel?.settings?.requestFeedback
+                ?: ChatPanelDefaults.Settings.requestFeedback
         if (requestConversationFeedback && hasClientMessages)
             showFeedback()
-        else
+        else {
             // If all else fails, close the window
             activity?.finish()
+            BoostUIEvents.notifyObservers(BoostUIEvents.Event.chatPanelClosed)
+        }
     }
 
     fun hideKeyboard() =

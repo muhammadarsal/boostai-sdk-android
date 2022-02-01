@@ -60,6 +60,7 @@
             </ScrollView>
 
             <FrameLayout
+                android:id="@+id/chat_input_wrapper_top_border"
                 android:layout_height="1dp"
                 android:layout_width="match_parent"
                 android:background="@color/gray"/>
@@ -68,83 +69,93 @@
                 android:id="@+id/chat_input_wrapper"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:padding="4dp"
+                android:paddingVertical="5dp"
+                android:paddingHorizontal="4dp"
                 android:layout_weight="0"
                 android:background="@color/lightGray"
                 android:clipToPadding="false">
 
                 <FrameLayout
-                    android:id="@+id/chat_input_border"
+                    android:id="@+id/chat_input_outline"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:padding="4dp"
-                    android:background="@drawable/transparent_border_corder_radius">
+                    android:background="@drawable/corder_radius_4dp">
 
-                    <LinearLayout
-                        android:id="@+id/chat_input_inner"
+                    <FrameLayout
+                        android:id="@+id/chat_input_border"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:paddingStart="16dp"
-                        android:paddingEnd="8dp"
-                        android:paddingTop="8dp"
-                        android:paddingBottom="8dp"
-                        android:background="@drawable/gray_border_corder_radius">
+                        android:padding="1dp"
+                        android:background="@drawable/corder_radius_4dp">
 
-                        <EditText
-                            android:id="@+id/chat_input_editText"
-                            android:layout_width="0dp"
+                        <LinearLayout
+                            android:id="@+id/chat_input_inner"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:minLines="1"
-                            android:textColor="@color/textColor"
-                            android:backgroundTint="@color/textColor"
-                            android:background="@null"
-                            android:maxLength="110"
-                            android:hint="@string/chat_input_placeholder"
-                            android:textColorHint="@color/textColor"
-                            android:paddingTop="4dp"
-                            android:paddingBottom="8dp"/>
+                            android:orientation="horizontal"
+                            android:paddingStart="16dp"
+                            android:paddingEnd="8dp"
+                            android:paddingTop="8dp"
+                            android:paddingBottom="8dp"
+                            android:background="@drawable/corder_radius_4dp">
 
-                        <RelativeLayout
-                            android:layout_width="70dp"
-                            android:layout_height="match_parent"
-                            android:orientation="vertical"
-                            android:layout_marginStart="16dp"
-                            android:gravity="end">
+                            <EditText
+                                android:id="@+id/chat_input_editText"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:minLines="1"
+                                android:textColor="@color/textColor"
+                                android:backgroundTint="@color/textColor"
+                                android:background="@null"
+                                android:maxLength="110"
+                                android:hint="@string/chat_input_placeholder"
+                                android:textColorHint="@color/textColor"
+                                android:paddingTop="4dp"
+                                android:paddingBottom="8dp"/>
 
-                            <FrameLayout
-                                android:id="@+id/chat_input_character_count_wrapper"
-                                android:layout_width="wrap_content"
-                                android:layout_height="0dp"
-                                android:layout_alignParentEnd="true"
-                                android:layout_alignParentTop="true"
-                                android:layout_alignBottom="@id/chat_input_submit_button"
-                                android:layout_marginBottom="8dp"
-                                android:layout_marginEnd="4dp"
-                                android:visibility="gone">
-                                <TextView
-                                    android:id="@+id/chat_input_character_count_textview"
+                            <RelativeLayout
+                                android:layout_width="70dp"
+                                android:layout_height="match_parent"
+                                android:orientation="vertical"
+                                android:layout_marginStart="16dp"
+                                android:gravity="end">
+
+                                <FrameLayout
+                                    android:id="@+id/chat_input_character_count_wrapper"
                                     android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="@string/default_character_text"
-                                    android:gravity="end"
-                                    />
-                            </FrameLayout>
+                                    android:layout_height="0dp"
+                                    android:layout_alignParentEnd="true"
+                                    android:layout_alignParentTop="true"
+                                    android:layout_alignBottom="@id/chat_input_submit_button"
+                                    android:layout_marginBottom="8dp"
+                                    android:layout_marginEnd="4dp"
+                                    android:visibility="gone">
+                                    <TextView
+                                        android:id="@+id/chat_input_character_count_textview"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="@string/default_character_text"
+                                        android:gravity="end"
+                                        />
+                                </FrameLayout>
 
-                            <ImageButton
-                                android:id="@+id/chat_input_submit_button"
-                                android:layout_width="34dp"
-                                android:layout_height="34dp"
-                                android:layout_gravity="end"
-                                android:layout_alignParentEnd="true"
-                                android:layout_alignParentBottom="true"
-                                android:background="@drawable/ic_submit_text_icon"
-                                android:backgroundTint="@color/gray"/>
+                                <ImageButton
+                                    android:id="@+id/chat_input_submit_button"
+                                    android:layout_width="34dp"
+                                    android:layout_height="34dp"
+                                    android:layout_gravity="end"
+                                    android:layout_alignParentEnd="true"
+                                    android:layout_alignParentBottom="true"
+                                    android:background="@drawable/ic_submit_text_icon"
+                                    android:backgroundTint="@color/gray"/>
 
-                        </RelativeLayout>
+                            </RelativeLayout>
 
-                    </LinearLayout>
+                        </LinearLayout>
+
+                    </FrameLayout>
 
                 </FrameLayout>
 

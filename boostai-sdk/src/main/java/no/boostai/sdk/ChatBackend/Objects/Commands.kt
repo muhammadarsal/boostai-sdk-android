@@ -21,7 +21,6 @@ package no.boostai.sdk.ChatBackend.Objects
 
 import kotlinx.serialization.*
 import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonObject
 
 @Serializable
 enum class Command {
@@ -51,13 +50,20 @@ Types a CommandPost can be
 - feedback: feedback()
 - files: sendFiles()
  */
+@Serializable
 enum class Type {
-    text,
-    trigger_action,
-    action_link,
-    external_link,
-    feedback,
-    files
+    @SerialName("text")
+    TEXT,
+    @SerialName("trigger_action")
+    TRIGGER_ACTION,
+    @SerialName("action_link")
+    ACTION_LINK,
+    @SerialName("external_link")
+    EXTERNAL_LINK,
+    @SerialName("feedback")
+    FEEDBACK,
+    @SerialName("files")
+    FILES
 }
 
 @Serializable
@@ -79,10 +85,14 @@ types can be: positive, removePositive, negative, removeNegative
  */
 @Serializable
 enum class FeedbackValue {
-    positive,
-    @SerialName("remove-positive") removePositive,
-    negative,
-    @SerialName("remove-negative") removeNegative
+    @SerialName("positive")
+    POSITIVE,
+    @SerialName("remove-positive")
+    REMOVE_POSITIVE,
+    @SerialName("negative")
+    NEGATIVE,
+    @SerialName("remove-negative")
+    REMOVE_NEGATIVE
 }
 
 @Serializable
@@ -134,19 +144,25 @@ class CommandStart : ICommand {
         userToken: String? = null,
         language: String? = null,
         filterValues: List<String>? = null,
+        contextIntentId: Int? = null,
         triggerAction: Int? = null,
         authTriggerAction: Int? = null,
+        skill: String? = null,
         clean: Boolean? = null,
         clientTimezone: String? = null,
+        customPayload: String? = null,
         preferredClientLanguage: List<String>? = null
     ) {
         this.userToken = userToken
         this.language = language
         this.filterValues = filterValues
+        this.contextIntentId = contextIntentId
         this.triggerAction = triggerAction
         this.authTriggerAction = authTriggerAction
+        this.skill = skill
         this.clean = clean
         this.clientTimezone = clientTimezone
+        this.customPayload = customPayload
         this.preferredClientLanguage = preferredClientLanguage
     }
 
@@ -159,6 +175,10 @@ class CommandStart : ICommand {
     /// List of strings, e.g. ['login', 'production']. Filter values are used to filter actions in the action flow
     @SerialName("filter_values")
     var filterValues: List<String>? = null
+
+    /// Itent Id to set conversation in a specific context
+    @SerialName("context_intent_id")
+    var contextIntentId: Int? = null
 
     /// Specific aciton id you want to trigger instead of the welcome message configured in Settings -> System action Triggers. If you have enabled consent
     /// this parameter will return an error message
@@ -174,6 +194,9 @@ class CommandStart : ICommand {
     @SerialName("user_token")
     var userToken: String? = null
 
+    /// Sets the Human Chat skill for the conversation
+    var skill: String? = null
+
     /// Return clean text
     var clean: Boolean? = null
 
@@ -187,9 +210,9 @@ class CommandStart : ICommand {
     @SerialName("preferred_client_language")
     var preferredClientLanguage: List<String>? = null
 
-    /// Forwarded to the API Connector and External API's. You can set this parameter to any JSON value
+    /// A string that is forwarded to External API's on each request
     @SerialName("custom_payload")
-    var customPayload: JsonObject? = null
+    var customPayload: String? = null
 }
 
 /**
@@ -206,7 +229,9 @@ class CommandPost : IConversation {
         clean: Boolean? = null,
         filterValues: List<String>? = null,
         contextIntentId: Int? = null,
+        skill: String? = null,
         id: String? = null,
+        customPayload: String? = null,
         clientTimezone: String? = null
     ) {
         this.conversationId = if (userToken == null) conversationId else null
@@ -215,7 +240,9 @@ class CommandPost : IConversation {
         this.clean = clean
         this.filterValues = filterValues
         this.contextIntentId = contextIntentId
+        this.skill = skill
         this.id = id
+        this.customPayload = customPayload
         this.clientTimezone = clientTimezone
     }
 
@@ -225,12 +252,8 @@ class CommandPost : IConversation {
     @Required
     var value: JsonElement? = null
 
-    /// Secure token
-    @SerialName("secure_token")
-    var secureToken: String? = null
-
     /// Type of the request
-    lateinit var type: Type
+    var type: Type
 
     /// If true, the API will return clean text instead of HTML in all responses
     var clean: Boolean? = null
@@ -239,17 +262,19 @@ class CommandPost : IConversation {
     @SerialName("filter_values")
     var filterValues: List<String>? = null
 
-
     /// Itent Id to set conversation in a specific context
     @SerialName("context_intent_id")
     var contextIntentId: Int? = null
 
+    /// Sets the Human Chat skill for the conversation
+    var skill: String? = null
+
     /// The id of a button or a bot question
     var id: String? = null
 
-    /// An object which is forwarded to External API's
+    /// An string that is forwarded to External API's on each request
     @SerialName("custom_payload")
-    var customPayload: JsonObject? = null
+    var customPayload: String? = null
 
     /// Forwarded to the API Connector and External API's. This parameter can tell an API which timezone the client is currently in.
     /// The format is listed [here](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones).
@@ -285,15 +310,22 @@ you supply a conversation id
  */
 @Serializable
 class CommandResume: IConversation {
-    constructor(conversationId: String? = null, userToken: String? = null) {
+    constructor(conversationId: String? = null,
+                userToken: String? = null,
+                skill: String? = null) {
         this.conversationId = conversationId
         this.userToken = userToken
+        this.skill = skill
     }
 
     @Required
     override val command = Command.RESUME
 
+    @Required
     var clean = false
+
+    /// Sets the Human Chat skill for the conversation
+    var skill: String? = null
 }
 
 /**
@@ -484,11 +516,18 @@ class CommandDownload : IConversation {
 }
 
 class CommandLoginEvent : IConversation {
-    constructor(conversationId: String? = null, userToken: String? = null) {
+    constructor(conversationId: String? = null,
+                userToken: String? = null,
+                skill: String? = null,
+    ) {
         this.conversationId = conversationId
         this.userToken = userToken
+        this.skill
     }
 
     @Required
     override val command = Command.LOGINEVENT
+
+    /// Sets the Human Chat skill for the conversation
+    var skill: String? = null
 }

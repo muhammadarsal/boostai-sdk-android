@@ -21,24 +21,17 @@ package no.boostai.sdkexample
 
 import android.os.Bundle
 import android.view.View
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import no.boostai.sdk.ChatBackend.ChatBackend
-import no.boostai.sdk.ChatBackend.Objects.AvatarStyle
 import no.boostai.sdk.ChatBackend.Objects.ChatConfig
 import no.boostai.sdk.UI.AgentAvatarFragment
-import no.boostai.sdk.UI.ChatViewFragment
 
-class FloatingAvatarFragment(val customConfig: ChatConfig? = null) :
-    Fragment(R.layout.floating_avatar_fragment) {
+class FloatingAvatarFragment(
+    val customConfig: ChatConfig? = null
+) : Fragment(R.layout.floating_avatar_fragment) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        val customConfig = ChatConfig()
-        customConfig.primaryColor = ContextCompat.getColor(requireContext(), android.R.color.holo_red_dark)
-        customConfig.avatarStyle = AvatarStyle.squared
-        ChatViewFragment(customConfig = customConfig)
 
         ChatBackend.onReady(object : ChatBackend.ConfigReadyListener {
             override fun onFailure(exception: Exception) {

@@ -35,10 +35,11 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import no.boostai.sdk.ChatBackend.ChatBackend
 import no.boostai.sdk.ChatBackend.Objects.ChatConfig
-import no.boostai.sdk.ChatBackend.Objects.ChatConfigDefaults
+import no.boostai.sdk.ChatBackend.Objects.ChatPanelDefaults
 import no.boostai.sdk.ChatBackend.Objects.Response.Link
 import no.boostai.sdk.ChatBackend.Objects.Response.LinkType
 import no.boostai.sdk.R
+import no.boostai.sdk.UI.Events.BoostUIEvents
 import no.boostai.sdk.UI.Helpers.TimingHelper
 import java.io.File
 import java.io.FileOutputStream
@@ -88,7 +89,8 @@ open class ChatMessageButtonFragment(
         textView = view.findViewById(R.id.chat_server_message_button_text)
         imageView = view.findViewById(R.id.chat_server_message_button_image_view)
 
-        val pace = ChatBackend.config?.pace ?: ChatConfigDefaults.pace
+        val pace = ChatBackend.config?.chatPanel?.styling?.pace
+            ?: ChatPanelDefaults.Styling.pace
         val staggerDelay = TimingHelper.calculateStaggerDelay(pace = pace, idx = idx)
         val fragment = this
 
@@ -106,6 +108,13 @@ open class ChatMessageButtonFragment(
             }
         }
         else view.alpha = 1.0F
+
+        val multiline = customConfig?.chatPanel?.styling?.buttons?.multiline
+            ?: ChatBackend.config?.chatPanel?.styling?.buttons?.multiline
+            ?: false
+
+        textView.maxLines = if (multiline) Integer.MAX_VALUE else 1
+
         view.setOnClickListener {
             if (link?.id == ACTION_LINK_UPLOAD) {
                 Intent(Intent.ACTION_GET_CONTENT).let { intent ->
@@ -117,10 +126,43 @@ open class ChatMessageButtonFragment(
                     it.data = Uri.parse(url)
                     startActivity(it)
                 }
+                BoostUIEvents.notifyObservers(BoostUIEvents.Event.externalLinkClicked, url)
             } ?: link?.let {
                 ChatBackend.actionButton(it.id)
+                BoostUIEvents.notifyObservers(BoostUIEvents.Event.actionLinkClicked, it.id)
+
+                val showLinkClickAsChatBubble =
+                    customConfig?.chatPanel?.settings?.showLinkClickAsChatBubble
+                        ?: ChatBackend.config?.chatPanel?.settings?.showLinkClickAsChatBubble
+                        ?: ChatPanelDefaults.Settings.showLinkClickAsChatBubble
+
+                if (showLinkClickAsChatBubble) {
+                    ChatBackend.userActionMessage(it.text)
+                }
             }
         }
+
+        view.onFocusChangeListener = View.OnFocusChangeListener { _, hasFocus ->
+            val backgroundColor = customConfig?.chatPanel?.styling?.buttons?.backgroundColor
+                ?: ChatBackend.config?.chatPanel?.styling?.buttons?.backgroundColor
+                ?: ContextCompat.getColor(requireContext(), R.color.buttonBackgroundColor)
+            val focusBackgroundColor =
+                customConfig?.chatPanel?.styling?.buttons?.focusBackgroundColor
+                    ?: ChatBackend.config?.chatPanel?.styling?.buttons?.focusBackgroundColor
+                    ?: backgroundColor
+            val textColor = customConfig?.chatPanel?.styling?.buttons?.textColor
+                ?: ChatBackend.config?.chatPanel?.styling?.buttons?.textColor
+                ?: ContextCompat.getColor(requireContext(), android.R.color.black)
+            val focusTextColor = customConfig?.chatPanel?.styling?.buttons?.focusTextColor
+                ?: ChatBackend.config?.chatPanel?.styling?.buttons?.focusTextColor
+                ?: textColor
+
+            view.background?.setTint(if (hasFocus) focusBackgroundColor else backgroundColor)
+            imageView.imageTintList =
+                ColorStateList.valueOf(if (hasFocus) focusTextColor else textColor)
+            textView.setTextColor(if (hasFocus) focusTextColor else textColor)
+        }
+
         updateStyling(ChatBackend.config)
         ChatBackend.addConfigObserver(this)
     }
@@ -149,22 +191,23 @@ open class ChatMessageButtonFragment(
     fun updateStyling(config: ChatConfig?) {
         if (config == null) return
 
-        @ColorInt val textColor = customConfig?.linkBelowColor ?: config.linkBelowColor
-            ?: ContextCompat.getColor(requireContext(), R.color.linkBelowColor)
-        @ColorInt val backgroundColor = customConfig?.linkBelowBackground
-            ?: config.linkBelowBackground
-            ?: ContextCompat.getColor(requireContext(), R.color.linkBelowBackground)
+        @ColorInt val textColor = customConfig?.chatPanel?.styling?.buttons?.textColor
+            ?: config.chatPanel?.styling?.buttons?.textColor
+            ?: ContextCompat.getColor(requireContext(), R.color.buttonTextColor)
+        @ColorInt val backgroundColor = customConfig?.chatPanel?.styling?.buttons?.backgroundColor
+            ?: config.chatPanel?.styling?.buttons?.backgroundColor
+            ?: ContextCompat.getColor(requireContext(), R.color.buttonBackgroundColor)
 
         val linkDrawable: Int
 
         if (link?.id == ACTION_LINK_UPLOAD) linkDrawable = R.drawable.ic_upload_files
-        else if (link?.type == LinkType.external_link)
+        else if (link?.type == LinkType.EXTERNAL_LINK)
             linkDrawable = R.drawable.ic_external_link_icon
         else linkDrawable = R.drawable.ic_arrow_right
         textView.setTextColor(textColor)
         imageView.setImageResource(linkDrawable)
         imageView.imageTintList = ColorStateList.valueOf(textColor)
-        (view?.background as? GradientDrawable)?.setColor(backgroundColor)
+        view?.background?.setTint(backgroundColor)
     }
 
     override fun onConfigReceived(backend: ChatBackend, config: ChatConfig) = updateStyling(config)

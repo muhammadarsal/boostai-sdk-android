@@ -45,24 +45,33 @@ import java.util.*
 @Serializable
 enum class ChatStatus {
     /// virtual_agent Chat is in virtual agent mode
-    virtual_agent,
+    @SerialName("virtual_agent")
+    VIRTUAL_AGENT,
+
     /// in_human_chat_queue
-    in_human_chat_queue,
+    @SerialName("in_human_chat_queue")
+    IN_HUMAN_CHAT_QUEUE,
+
     /// assigned_to_human
-    assigned_to_human
+    @SerialName("assigned_to_human")
+    ASSIGNED_TO_HUMAN
 }
 
 /// Possible values of response.source
 @Serializable
 enum class SourceType {
-    bot,
-    client
+    @SerialName("bot")
+    BOT,
+    @SerialName("client")
+    CLIENT
 }
 
 @Serializable
 enum class LinkType {
-    action_link,
-    external_link
+    @SerialName("action_link")
+    ACTION_LINK,
+    @SerialName("external_link")
+    EXTERNAL_LINK
 }
 
 /// Types an element result can have
@@ -76,12 +85,18 @@ enum class LinkType {
 /// - links
 @Serializable(with = ElementTypeSerializer::class)
 enum class ElementType {
-    text,
-    html,
-    image,
-    video,
-    json,
-    links,
+    @SerialName("text")
+    TEXT,
+    @SerialName("html")
+    HTML,
+    @SerialName("image")
+    IMAGE,
+    @SerialName("video")
+    VIDEO,
+    @SerialName("json")
+    JSON,
+    @SerialName("links")
+    LINKS,
     UNKNOWN
 }
 
@@ -93,13 +108,13 @@ object ElementTypeSerializer {
     override fun deserialize(decoder: Decoder): ElementType {
         // If we don't have the element type provided by JSON, set it to UNKNOWN
         return try {
-            ElementType.valueOf(decoder.decodeString())
+            ElementType.valueOf(decoder.decodeString().uppercase())
         } catch (e: Exception) {
             ElementType.UNKNOWN
         }
     }
-    override fun serialize(encoder: Encoder, obj: ElementType) {
-        encoder.encodeString(obj.name)
+    override fun serialize(encoder: Encoder, value: ElementType) {
+        encoder.encodeString(value.name)
     }
 }
 

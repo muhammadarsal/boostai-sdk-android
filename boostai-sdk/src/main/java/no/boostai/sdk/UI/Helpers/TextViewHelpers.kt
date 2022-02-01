@@ -8,17 +8,20 @@ import android.text.style.URLSpan
 import android.view.View
 import android.widget.TextView
 
-fun TextView.handleUrlClicks(onClicked: ((String) -> Unit)? = null) {
+fun TextView.handleUrlClicks(onClicked: ((String, String) -> Unit)? = null) {
     // Create span builder and replace current text with it
     text = SpannableStringBuilder.valueOf(text).apply {
         // Search for all URL spans and replace all spans with our own clickable spans
         getSpans(0, length, URLSpan::class.java).forEach {
+            // Get the text clicked
+            val clickedText = text.subSequence(getSpanStart(it), getSpanEnd(it)).toString()
+
             // Add new clickable span at the same position
             setSpan(
                 object : ClickableSpan() {
 
                     override fun onClick(widget: View) {
-                        onClicked?.invoke(it.url)
+                        onClicked?.invoke(it.url, clickedText)
                     }
 
                 },

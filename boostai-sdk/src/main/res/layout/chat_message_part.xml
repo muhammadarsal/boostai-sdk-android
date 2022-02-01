@@ -26,7 +26,6 @@
             android:background="@drawable/ic_thumbs_down"
             android:id="@+id/chat_message_feedback_negative"
             android:layout_marginTop="6dp"
-            android:alpha=".42"
             android:layout_width="16dp"
             android:layout_height="16dp" />
 
@@ -35,7 +34,6 @@
             android:id="@+id/chat_message_feedback_positive"
             android:layout_marginStart="8dp"
             android:layout_marginTop="2dp"
-            android:alpha=".42"
             android:layout_width="16dp"
             android:layout_height="16dp" />
 

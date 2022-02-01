@@ -20,6 +20,7 @@
 package no.boostai.sdk.UI
 
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.os.Bundle
@@ -32,7 +33,9 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import no.boostai.sdk.ChatBackend.ChatBackend
 import no.boostai.sdk.ChatBackend.Objects.ChatConfig
+import no.boostai.sdk.ChatBackend.Objects.ChatPanelDefaults
 import no.boostai.sdk.R
+import no.boostai.sdk.UI.Events.BoostUIEvents
 import no.boostai.sdk.UI.Helpers.handleUrlClicks
 import no.boostai.sdk.UI.Helpers.trimTrailingWhitespace
 
@@ -90,16 +93,29 @@ open class ChatMessageTextFragment(
             val content: CharSequence = Html.fromHtml(text, Html.FROM_HTML_MODE_LEGACY)
 
             textView.text = trimTrailingWhitespace(content)
-            textView.handleUrlClicks { url ->
+            textView.handleUrlClicks { url, text ->
                 if (url.startsWith("boostai://")) {
                     val id = url.removePrefix("boostai://")
 
                     ChatBackend.actionButton(id)
-                } else
+                    BoostUIEvents.notifyObservers(BoostUIEvents.Event.actionLinkClicked, id)
+
+                    val showLinkClickAsChatBubble =
+                        customConfig?.chatPanel?.settings?.showLinkClickAsChatBubble
+                            ?: ChatBackend.config?.chatPanel?.settings?.showLinkClickAsChatBubble
+                            ?: ChatPanelDefaults.Settings.showLinkClickAsChatBubble
+
+                    if (showLinkClickAsChatBubble) {
+                        ChatBackend.userActionMessage(text)
+                    }
+                } else {
                     Intent(Intent.ACTION_VIEW).let {
                         it.setData(Uri.parse(url))
                         startActivity(it)
                     }
+
+                    BoostUIEvents.notifyObservers(BoostUIEvents.Event.externalLinkClicked, url)
+                }
             }
         } else textView.text = text
         /*if (animated)
@@ -109,8 +125,8 @@ open class ChatMessageTextFragment(
         ChatBackend.addConfigObserver(this)
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
+    override fun onDestroyView() {
+        super.onDestroyView()
 
         ChatBackend.removeConfigObserver(this)
     }
@@ -122,22 +138,24 @@ open class ChatMessageTextFragment(
         @ColorInt val textColor: Int
 
         if (isClient) {
-            backgroundColor = customConfig?.clientMessageBackground
-                ?: config.clientMessageBackground
-                ?: ContextCompat.getColor(requireContext(), R.color.clientMessageBackground)
-            textColor = customConfig?.clientMessageColor ?: config.clientMessageColor
-                ?: ContextCompat.getColor(requireContext(), R.color.clientMessageColor)
+            backgroundColor = customConfig?.chatPanel?.styling?.chatBubbles?.userBackgroundColor
+                ?: config.chatPanel?.styling?.chatBubbles?.userBackgroundColor
+                ?: ContextCompat.getColor(requireContext(), R.color.userBackgroundColor)
+            textColor = customConfig?.chatPanel?.styling?.chatBubbles?.userTextColor
+                ?: config.chatPanel?.styling?.chatBubbles?.userTextColor
+                ?: ContextCompat.getColor(requireContext(), R.color.userTextColor)
         } else {
-            backgroundColor = customConfig?.serverMessageBackground
-                ?: config.serverMessageBackground
-                ?: ContextCompat.getColor(requireContext(), R.color.serverMessageBackground)
-            textColor = customConfig?.serverMessageColor ?: config.serverMessageColor
-                ?: ContextCompat.getColor(requireContext(), R.color.serverMessageColor)
+            backgroundColor = customConfig?.chatPanel?.styling?.chatBubbles?.vaBackgroundColor
+                ?: config.chatPanel?.styling?.chatBubbles?.vaBackgroundColor
+                ?: ContextCompat.getColor(requireContext(), R.color.vaBackgroundColor)
+            textColor = customConfig?.chatPanel?.styling?.chatBubbles?.vaTextColor
+                ?: config.chatPanel?.styling?.chatBubbles?.vaTextColor
+                ?: ContextCompat.getColor(requireContext(), R.color.vaTextColor)
         }
 
         textView.setTextColor(textColor)
         textView.setLinkTextColor(textColor)
-        (view?.background as? GradientDrawable)?.setColor(backgroundColor)
+        view?.backgroundTintList = ColorStateList.valueOf(backgroundColor)
     }
 
     override fun onConfigReceived(backend: ChatBackend, config: ChatConfig) = updateStyling(config)

@@ -27,6 +27,7 @@ import androidx.annotation.DrawableRes
 import androidx.fragment.app.Fragment
 import no.boostai.sdk.ChatBackend.Objects.ChatConfig
 import no.boostai.sdk.R
+import no.boostai.sdk.UI.Events.BoostUIEvents
 
 open class AgentAvatarFragment(
     @DrawableRes var avatarImageResource: Int? = null,
@@ -50,12 +51,10 @@ open class AgentAvatarFragment(
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
 
+        outState.putParcelable(customConfigKey, customConfig)
+
         avatarImageResource?.let {
             outState.putInt(avatarImageResourceKey, it)
-        }
-
-        customConfig?.let {
-            outState.putParcelable(customConfigKey, it)
         }
     }
 
@@ -71,7 +70,10 @@ open class AgentAvatarFragment(
                 customConfig?.let { config ->
                     intent.putExtra(ChatViewActivity.CUSTOM_CONFIG, config)
                 }
+
                 startActivity(intent)
+
+                BoostUIEvents.notifyObservers(BoostUIEvents.Event.chatPanelOpened)
             }
         }
     }

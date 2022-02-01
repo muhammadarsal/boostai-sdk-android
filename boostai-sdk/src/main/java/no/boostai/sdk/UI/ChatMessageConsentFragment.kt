@@ -27,10 +27,11 @@ import android.widget.Button
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import no.boostai.sdk.ChatBackend.ChatBackend
-import no.boostai.sdk.ChatBackend.Objects.ChatConfigDefaults
+import no.boostai.sdk.ChatBackend.Objects.ChatPanelDefaults
 import no.boostai.sdk.ChatBackend.Objects.Response.FunctionType
 import no.boostai.sdk.ChatBackend.Objects.Response.Link
 import no.boostai.sdk.R
+import no.boostai.sdk.UI.Events.BoostUIEvents
 import no.boostai.sdk.UI.Helpers.TimingHelper
 import java.util.*
 import kotlin.concurrent.schedule
@@ -67,7 +68,8 @@ open class ChatMessageConsentFragment(
         denyButton = view.findViewById(R.id.deny_button)
 
         if (animated) {
-            val pace = ChatBackend.config?.pace ?: ChatConfigDefaults.pace
+            val pace = ChatBackend.config?.chatPanel?.styling?.pace
+                ?: ChatPanelDefaults.Styling.pace
             val staggerDelay = TimingHelper.calculateStaggerDelay(pace = pace, idx = 0)
 
             Timer().schedule(staggerDelay) {
@@ -94,6 +96,7 @@ open class ChatMessageConsentFragment(
                 approveButton.text = link.text
                 approveButton.setOnClickListener {
                     ChatBackend.actionButton(link.id)
+                    BoostUIEvents.notifyObservers(BoostUIEvents.Event.actionLinkClicked, link.id)
                     approveButton.setTextColor(
                         ContextCompat.getColor(
                             requireContext(),
@@ -113,6 +116,7 @@ open class ChatMessageConsentFragment(
                 denyButton.text = link.text
                 denyButton.setOnClickListener {
                     ChatBackend.actionButton(link.id)
+                    BoostUIEvents.notifyObservers(BoostUIEvents.Event.actionLinkClicked, link.id)
                     denyButton.setTextColor(
                         ContextCompat.getColor(requireContext(), R.color.consentDenyButtonTextColor)
                     )

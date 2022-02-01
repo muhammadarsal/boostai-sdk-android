@@ -77,19 +77,21 @@ open class ChatHumanTypingFragment (var customConfig: ChatConfig? = null) :
         ChatBackend.addConfigObserver(this)
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
+    override fun onDestroyView() {
+        super.onDestroyView()
 
         ChatBackend.removeConfigObserver(this)
     }
 
     fun updateStyling(config: ChatConfig) {
         @ColorInt val backgroundColor =
-            customConfig?.serverMessageBackground ?: config.serverMessageBackground
-            ?: ContextCompat.getColor(requireContext(), R.color.serverMessageBackground)
+            customConfig?.chatPanel?.styling?.chatBubbles?.vaBackgroundColor
+                ?: config.chatPanel?.styling?.chatBubbles?.vaBackgroundColor
+                ?: ContextCompat.getColor(requireContext(), R.color.vaBackgroundColor)
         @ColorInt val textColor =
-            customConfig?.serverMessageColor ?: config.serverMessageColor
-            ?: ContextCompat.getColor(requireContext(), R.color.serverMessageColor)
+            customConfig?.chatPanel?.styling?.chatBubbles?.vaTextColor
+                ?: config.chatPanel?.styling?.chatBubbles?.vaTextColor
+                ?: ContextCompat.getColor(requireContext(), R.color.vaTextColor)
 
         backgroundColor.let {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)

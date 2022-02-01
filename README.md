@@ -11,11 +11,12 @@
         * [Docked chat view (in a tab bar)](#docked-chat-view-in-a-tab-bar)
         * [Modal chat view](#modal-chat-view)
     * [ChatViewFragment](#chatviewfragment)
-       * [Colors](#colors)
     * [Customize responses (i.e. handle custom JSON responses)](#customize-responses-ie-handle-custom-json-responses)
+    * [Subscribe to UI events](#subscribe-to-ui-events)
 * [Backend](#backend)
     * [Subscribe to messages](#subscribe-to-messages)
     * [Subscribe to config changes](#subscribe-to-config-changes)
+    * [Subscribe to backend `emitEvent` JSON](#subscribe-to-backend-emitevent-json)
     * [Commands](#commands)
     * [Post](#post)
     * [Send](#send)
@@ -43,7 +44,7 @@ Add the boost.ai SDK library as a dependency in your app `build.gradle` file:
 
 ```kotlin
 dependencies { 
-  implementation 'com.github.BoostAI:mobile-sdk-android:1.0.5'
+  implementation 'com.github.BoostAI:mobile-sdk-android:1.1.0'
 }
 ```
 
@@ -66,7 +67,7 @@ Add the dependency:
 <dependency>
     <groupId>com.github.BoostAI</groupId>
     <artifactId>mobile-sdk-android</artifactId>
-    <version>1.0.5</version>
+    <version>1.1.0</version>
 </dependency>
 ```
 
@@ -86,12 +87,11 @@ To start off, we need to configure the ChatBackend singleton object:
 
 ```kotlin
 ChatBackend.domain = "sdk.boost.ai"
-ChatBackend.languageCode = "no-NO" // Default value – will potentially be overridden by the backend config
 ```
 
 ### Config
 
-Almost all of colors, string and other customization is available in a `Config` object that comes from the server. The config object can be accessed at any point later through the `ChatBackend.config` property. Before we display the chat view, we should wait for the config to be ready. This can be done by calling `ChatBackend.onReady` with a listener:
+Most colors, string and other customization is available in a `Config` object that comes from the server. The config object can be accessed at any point later through the `ChatBackend.config` property. Before we display the chat view, we should wait for the config to be ready. This can be done by calling `ChatBackend.onReady` with a listener:
 
 ```kotlin
 ChatBackend.onReady(object : ChatBackend.ConfigReadyListener {
@@ -104,6 +104,41 @@ ChatBackend.onReady(object : ChatBackend.ConfigReadyListener {
     }
 })
 ```
+
+If you want to locally override some of the config variables, you can pass a custom `ChatConfig` object to a `ChatViewFragment`:
+
+```kotlin
+val customConfig = ChatConfig(
+    chatPanel = ChatPanel(
+        styling = Styling(
+            primaryColor = getColor(android.R.color.holo_red_dark),
+            contrastColor = getColor(android.R.color.holo_orange_light),
+            chatBubbles = ChatBubbles(
+                vaTextColor = getColor(android.R.color.white),
+                vaBackgroundColor = getColor(android.R.color.holo_green_dark)
+            ),
+            buttons = Buttons(
+                multiline = true
+            )
+        ),
+        settings = Settings(
+            conversationId = "[pass a stored conversationId here to resume conversation]",
+            showLinkClickAsChatBubble = true,
+            startLanguage = "no-NO"
+        )
+    ),
+)
+
+val chatViewFragment = ChatViewFragment(customConfig = customConfig)
+```
+
+See the "Configuring the Chat Panel" > "Options" chapter of the Chat Panel JavaScript documentation for an extensive overview of the options available for overriding.
+
+#### Colors
+
+The order of precedence for colors is (1) custom config color, (2) server config color, and (3) default embedded SDK colors. Example of precedence: (1) custom config `primaryColor`, (2) server config `primaryColor` and (3) `R.color.primaryColor` from `colors.xml`.
+
+Please note that all colors are `ColorInt`s, and resource colors must be converted to color integers (i.e. `ContextCompat.getColor(requireContext(), R.color.primaryColor)`).
 
 ### Display the chat
 
@@ -186,20 +221,6 @@ Intent(mContext, ChatViewActivity::class.java).let { intent ->
 ### ChatViewFragment
 
 The `ChatViewFragment` is the main entry point for the chat view. It can be subclassed for fine-grained control, or you can set and override properties and assign yourself as a delegate to configure most of the normal use cases.
-
-#### Colors
-
-Colors will normally be configured server-side, and all of the Boost UI view will use these colors by default. We encourage you to configure colors server-side to get a consistent color palette across platforms, but if you want to override these colors in your app, you can pass a custom config object to the `ChatViewFragment`.
-
-The order of precedence for colors is (1) custom config color, (2) server config color, and (3) default embedded SDK colors. Example of precedence: (1) custom config `primaryColor`, (2) server config `primaryColor` and (3) `R.color.primaryColor` from `colors.xml`.
-
-Please note that all colors are `ColorInt`s, and resource colors must be converted to color integers (i.e. `ContextCompat.getColor(requireContext(), R.color.primaryColor)`).
-
-```kotlin
-val customConfig = ChatConfig()
-customConfig.primaryColor = getColor(R.color.red)
-val chatViewFragment = ChatViewFragment(customConfig = customConfig)
-```
 
 ### Customize responses (i.e. handle custom JSON responses)
 
@@ -319,6 +340,31 @@ class MyClass: ChatViewFragmentDelegate {
 }
 ```
 
+### Subscribe to UI events
+
+You can subscribe to UI events by adding an observer to the `BoostUIEvents` class. `event` (defined as an enum called `BoostEvent`) and `detail` refer to the events and detail as described in the JS Chat Panel documentation under the chapter "Events" (`addEventListener`).
+
+```kotlin
+class MyFragment : Fragment, BoostUIEvents.Observer {
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        BoostUIEvents.addObserver(this)
+   }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+
+        BoostUIEvents.removeObserver(this)
+    }
+    
+    // Implement observer method
+    override fun onUIEventReceived(event: BoostUIEvents.Event, detail: Any?) {
+        println("Boost UI event: $event, detail: $detail");
+    }
+}
+```
+
 ## Backend
 
 The `ChatBackend` class is the main entry point for everything backend/API related. As a minimum, it needs a domain to point to:
@@ -340,9 +386,9 @@ class MyFragment : Fragment, ChatBackend.MessageObserver {
         
         ChatBackend.addMessageObserver(this)
     }
-    
-    override fun onDestroy() {
-        super.onDestroy()
+
+    override fun onDestroyView() {
+        super.onDestroyView()
 
         ChatBackend.removeMessageObserver(this)
     }
@@ -370,9 +416,9 @@ class MyFragment : Fragment, ChatBackend.ConfigObserver {
         
         ChatBackend.addConfigObserver(this)
     }
-    
-    override fun onDestroy() {
-        super.onDestroy()
+
+    override fun onDestroyView() {
+        super.onDestroyView()
 
         ChatBackend.removeConfigObserver(this)
     }
@@ -385,6 +431,31 @@ class MyFragment : Fragment, ChatBackend.ConfigObserver {
     override fun onFailure(backend: ChatBackend, error: Exception) {
         showStatusMessage(error.localizedMessage ?: getString(R.string.unknown_error), true)
     }
+```
+
+### Subscribe to backend `emitEvent` JSON
+
+If you are sending custom events from the server-side action flow, you can subscribe to these in your app by adding an observer to the chat backend. `type` and `detail` refer to the events and detail as described in the JS Chat Panel documentation under the chapter "Events" (`addEventListener`), regarding the `emitEvent` JSON type.
+
+```kotlin
+class MyFragment : Fragment, ChatBackend.EventObserver {
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        
+        ChatBackend.addEventObserver(this)
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+
+        ChatBackend.removeEventObserver(this)
+    }
+    
+    // Implement observer method
+    override fun onBackendEventReceived(backend: ChatBackend, type: String, detail: JsonElement?) {
+        println("Boost backend event: $type, detail: $detail")
+    }
+}
 ```
 
 ### Commands

@@ -20,6 +20,7 @@
 package no.boostai.sdk.UI
 
 import android.annotation.SuppressLint
+import android.content.res.ColorStateList
 import android.os.Bundle
 import android.util.TypedValue
 import android.view.Gravity
@@ -28,17 +29,20 @@ import android.view.ViewTreeObserver
 import android.view.animation.AnimationUtils
 import android.widget.FrameLayout
 import android.widget.LinearLayout
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import kotlinx.serialization.json.decodeFromJsonElement
 import no.boostai.sdk.ChatBackend.ChatBackend
+import no.boostai.sdk.ChatBackend.Objects.ButtonType
 import no.boostai.sdk.ChatBackend.Objects.ChatConfig
-import no.boostai.sdk.ChatBackend.Objects.ChatConfigDefaults
+import no.boostai.sdk.ChatBackend.Objects.ChatPanelDefaults
 import no.boostai.sdk.ChatBackend.Objects.FeedbackValue
 import no.boostai.sdk.ChatBackend.Objects.Response.Element
 import no.boostai.sdk.ChatBackend.Objects.Response.ElementType
 import no.boostai.sdk.ChatBackend.Objects.Response.GenericCard
 import no.boostai.sdk.ChatBackend.Objects.Response.Link
 import no.boostai.sdk.R
+import no.boostai.sdk.UI.Events.BoostUIEvents
 
 open class ChatMessagePartFragment(
     var element: Element? = null,
@@ -46,18 +50,19 @@ open class ChatMessagePartFragment(
     var isClient: Boolean = false,
     var isBlocked: Boolean = false,
     var isWelcomeMessage: Boolean = false,
-    var isLastMessagePart: Boolean = false,
     val animated: Boolean = true,
     var customConfig: ChatConfig? = null
-) : Fragment(R.layout.chat_message_part) {
+) : IChatMessagePartFragment(R.layout.chat_message_part), ChatBackend.ConfigObserver {
 
     val elementKey = "element"
     val responseIdKey = "responseId"
     val isClientKey = "isClient"
     val isBlockedKey = "isBlocked"
     val isWelcomeMessageKey = "isWelcomeMessage"
-    val isLastMessagePartKey = "isLastMessagePart"
     val customConfigKey = "customConfig"
+
+    var positiveMessageFeedbackButton: View? = null
+    var negativeMessageFeedbackButton: View? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -69,7 +74,6 @@ open class ChatMessagePartFragment(
             isClient = it.getBoolean(isClientKey)
             isBlocked = it.getBoolean(isBlockedKey)
             isWelcomeMessage = it.getBoolean(isWelcomeMessageKey)
-            isLastMessagePart = it.getBoolean(isLastMessagePartKey)
             customConfig = it.getParcelable(customConfigKey)
         }
     }
@@ -82,13 +86,15 @@ open class ChatMessagePartFragment(
         outState.putBoolean(isClientKey, isClient)
         outState.putBoolean(isBlockedKey, isBlocked)
         outState.putBoolean(isWelcomeMessageKey, isWelcomeMessage)
-        outState.putBoolean(isLastMessagePartKey, isLastMessagePart)
         outState.putParcelable(customConfigKey, customConfig)
     }
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        positiveMessageFeedbackButton = view.findViewById(R.id.chat_message_feedback_positive)
+        negativeMessageFeedbackButton = view.findViewById(R.id.chat_message_feedback_negative)
 
         if (isClient) {
             val linearLayout = view as LinearLayout
@@ -109,13 +115,15 @@ open class ChatMessagePartFragment(
             var fragment: Fragment? = null
 
             when (element?.type) {
-                ElementType.text -> fragment =
+                ElementType.TEXT -> fragment =
                     element?.payload?.text?.let { getChatMessageTextFragment(it, false) }
-                ElementType.html -> fragment =
+                ElementType.HTML -> fragment =
                     element?.payload?.html?.let { getChatMessageTextFragment(it, true) }
-                ElementType.links -> {
-                    val linkDisplayStyle = ChatBackend.config?.linkDisplayStyle ?: ChatConfigDefaults.linkDisplayStyle
-                    if (linkDisplayStyle == "inside") {
+                ElementType.LINKS -> {
+                    val buttonType = customConfig?.chatPanel?.styling?.buttons?.variant
+                        ?: ChatBackend.config?.chatPanel?.styling?.buttons?.variant
+                        ?: ChatPanelDefaults.Styling.Buttons.variant
+                    if (buttonType == ButtonType.BULLET) {
                         val stringBuilder = StringBuilder()
 
                         stringBuilder.append("<ul style=\"padding-left: 10px\">")
@@ -125,15 +133,19 @@ open class ChatMessagePartFragment(
                         }
                         stringBuilder.append("</ul>")
                         fragment = getChatMessageTextFragment(stringBuilder.toString(), true)
-                    } else fragment = element?.payload?.links?.let { getChatMessageButtonsFragment(it) }
+                    } else fragment =
+                        element?.payload?.links?.let { getChatMessageButtonsFragment(it) }
                 }
-                ElementType.image -> fragment =
+                ElementType.IMAGE -> fragment =
                     element?.payload?.url?.let { getChatMessageImageFragment(it) }
-                ElementType.video -> fragment =
+                ElementType.VIDEO -> fragment =
                     if (element?.payload?.source != null && element?.payload?.url != null)
-                        getChatMessageVideoFragment(element!!.payload.source!!, element!!.payload.url!!)
+                        getChatMessageVideoFragment(
+                            element!!.payload.source!!,
+                            element!!.payload.url!!
+                        )
                     else null
-                ElementType.json -> {
+                ElementType.JSON -> {
                     element?.payload?.json?.let {
                         try {
                             val genericCard =
@@ -147,41 +159,87 @@ open class ChatMessagePartFragment(
                 ElementType.UNKNOWN -> {} // TODO
             }
             fragment?.let {
-                childFragmentManager.beginTransaction().add(R.id.chat_message_part, it).commitAllowingStateLoss()
+                childFragmentManager.beginTransaction().add(R.id.chat_message_part, it)
+                    .commitAllowingStateLoss()
             }
         }
 
+        view.findViewById<LinearLayout>(R.id.chat_message_feedback)?.visibility =
+            View.GONE
+
+        updateStyling()
+        ChatBackend.addConfigObserver(this)
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+
+        ChatBackend.removeConfigObserver(this)
+    }
+
+    override fun canRender(element: Element): Boolean {
+        return when (element.type) {
+            ElementType.TEXT -> element.payload.text?.isNotEmpty() ?: false
+            ElementType.HTML -> element.payload.html?.isNotEmpty() ?: false
+            ElementType.LINKS -> element.payload.links?.count() ?: 0 > 0
+            ElementType.IMAGE -> element.payload.url?.isNotEmpty() ?: false
+            ElementType.VIDEO -> (element.payload.source?.isNotEmpty() ?: false) && (element.payload.url?.isNotEmpty() ?: false)
+            ElementType.JSON -> element.payload.json?.let {
+                    try {
+                        val genericCard =
+                            ChatBackend.chatbackendJson.decodeFromJsonElement<GenericCard>(it)
+                        genericCard.heading != null || genericCard.body != null
+                    } catch (e: Exception) {
+                        false
+                    }
+                } ?: false
+            ElementType.UNKNOWN -> false
+        }
+    }
+
+    override fun showFeedbackButtons() {
         // Show feedback buttons when conditions are met
-        if (
-            responseId != null && !isClient && !isBlocked && !isWelcomeMessage && isLastMessagePart
-        ) {
+        view?.let { view ->
             var activeFeedbackValue: FeedbackValue? = null
-            val thumbOnAnimation = AnimationUtils.loadAnimation(context, R.anim.feedback_thumb_on)
-            val thumbOffAnimation = AnimationUtils.loadAnimation(context, R.anim.feedback_thumb_off)
+            val thumbOnAnimation =
+                AnimationUtils.loadAnimation(context, R.anim.feedback_thumb_on)
+            val thumbOffAnimation =
+                AnimationUtils.loadAnimation(context, R.anim.feedback_thumb_off)
             val viewTreeObserver = view.viewTreeObserver
+
+            val iconOutlineColor = customConfig?.chatPanel?.styling?.messageFeedback?.outlineColor
+                ?: ChatBackend.config?.chatPanel?.styling?.messageFeedback?.outlineColor
+                ?: ContextCompat.getColor(requireContext(), R.color.messageFeedbackColor)
+            val iconSelectedColor = customConfig?.chatPanel?.styling?.messageFeedback?.selectedColor
+                ?: ChatBackend.config?.chatPanel?.styling?.messageFeedback?.selectedColor
+                ?: iconOutlineColor
 
             view.findViewById<View>(R.id.chat_message_feedback_positive)?.let { button: View ->
                 val sibling = view.findViewById<View>(R.id.chat_message_feedback_negative)
 
-
                 button.setOnClickListener {
-                    if (activeFeedbackValue == FeedbackValue.positive) {
+                    if (activeFeedbackValue == FeedbackValue.POSITIVE) {
                         activeFeedbackValue = null
-                        ChatBackend.feedback(responseId!!, FeedbackValue.removePositive)
                         button.setBackgroundResource(R.drawable.ic_thumbs_up)
+                        button.backgroundTintList = ColorStateList.valueOf(iconOutlineColor)
                         button.startAnimation(thumbOffAnimation)
                         sibling.animation = null
-                    }
-                    else {
-                        if (activeFeedbackValue == FeedbackValue.negative) {
-                            ChatBackend.feedback(responseId!!, FeedbackValue.removeNegative)
+
+                        ChatBackend.feedback(responseId!!, FeedbackValue.REMOVE_POSITIVE)
+                    } else {
+                        if (activeFeedbackValue == FeedbackValue.NEGATIVE) {
+                            ChatBackend.feedback(responseId!!, FeedbackValue.REMOVE_NEGATIVE)
                             sibling.setBackgroundResource(R.drawable.ic_thumbs_down)
+                            sibling.backgroundTintList = ColorStateList.valueOf(iconOutlineColor)
                             sibling.startAnimation(thumbOffAnimation)
                         }
-                        activeFeedbackValue = FeedbackValue.positive
-                        ChatBackend.feedback(responseId!!, FeedbackValue.positive)
+                        activeFeedbackValue = FeedbackValue.POSITIVE
                         button.setBackgroundResource(R.drawable.ic_thumbs_up_filled)
+                        button.backgroundTintList = ColorStateList.valueOf(iconSelectedColor)
                         button.startAnimation(thumbOnAnimation)
+
+                        ChatBackend.feedback(responseId!!, FeedbackValue.REMOVE_POSITIVE)
+                        BoostUIEvents.notifyObservers(BoostUIEvents.Event.positiveMessageFeedbackGiven)
                     }
                 }
             }
@@ -189,23 +247,28 @@ open class ChatMessagePartFragment(
                 val sibling = view.findViewById<View>(R.id.chat_message_feedback_positive)
 
                 button.setOnClickListener {
-                    if (activeFeedbackValue == FeedbackValue.negative) {
+                    if (activeFeedbackValue == FeedbackValue.NEGATIVE) {
                         activeFeedbackValue = null
-                        ChatBackend.feedback(responseId!!, FeedbackValue.removeNegative)
                         button.setBackgroundResource(R.drawable.ic_thumbs_down)
                         button.startAnimation(thumbOffAnimation)
+                        button.backgroundTintList = ColorStateList.valueOf(iconOutlineColor)
                         sibling.animation = null
-                    }
-                    else {
-                        if (activeFeedbackValue == FeedbackValue.positive) {
-                            ChatBackend.feedback(responseId!!, FeedbackValue.removePositive)
+
+                        ChatBackend.feedback(responseId!!, FeedbackValue.REMOVE_NEGATIVE)
+                    } else {
+                        if (activeFeedbackValue == FeedbackValue.POSITIVE) {
+                            ChatBackend.feedback(responseId!!, FeedbackValue.REMOVE_POSITIVE)
                             sibling.setBackgroundResource(R.drawable.ic_thumbs_up)
+                            sibling.backgroundTintList = ColorStateList.valueOf(iconOutlineColor)
                             sibling.startAnimation(thumbOffAnimation)
                         }
-                        activeFeedbackValue = FeedbackValue.negative
-                        ChatBackend.feedback(responseId!!, FeedbackValue.negative)
+                        activeFeedbackValue = FeedbackValue.NEGATIVE
                         button.setBackgroundResource(R.drawable.ic_thumbs_down_filled)
+                        button.backgroundTintList = ColorStateList.valueOf(iconSelectedColor)
                         button.startAnimation(thumbOnAnimation)
+
+                        ChatBackend.feedback(responseId!!, FeedbackValue.NEGATIVE)
+                        BoostUIEvents.notifyObservers(BoostUIEvents.Event.negativeMessageFeedbackGiven)
                     }
                 }
             }
@@ -218,31 +281,51 @@ open class ChatMessagePartFragment(
                             view.viewTreeObserver.removeOnGlobalLayoutListener(this)
                             view.findViewById<LinearLayout>(R.id.chat_message_feedback)
                                 .layoutParams =
-                                    LinearLayout.LayoutParams(
-                                        view.findViewById<FrameLayout>(R.id.chat_message_part)
-                                            .width,
-                                        LinearLayout.LayoutParams.WRAP_CONTENT
-                                    )
+                                LinearLayout.LayoutParams(
+                                    view.findViewById<FrameLayout>(R.id.chat_message_part)
+                                        .width,
+                                    LinearLayout.LayoutParams.WRAP_CONTENT
+                                )
                         }
 
                     }
                 )
-        } else view.findViewById<LinearLayout>(R.id.chat_message_feedback)?.visibility = View.GONE
+
+            view.findViewById<LinearLayout>(R.id.chat_message_feedback)?.visibility =
+                View.VISIBLE
+        }
     }
 
-     fun getChatMessageTextFragment(text: String, isHtml: Boolean): Fragment =
+    fun updateStyling(config: ChatConfig? = null) {
+        val outlineColor = customConfig?.chatPanel?.styling?.messageFeedback?.outlineColor
+            ?: config?.chatPanel?.styling?.messageFeedback?.outlineColor
+            ?: ContextCompat.getColor(requireContext(), R.color.messageFeedbackColor)
+
+        val color = ColorStateList.valueOf(outlineColor)
+        positiveMessageFeedbackButton?.backgroundTintList = color
+        negativeMessageFeedbackButton?.backgroundTintList = color
+    }
+
+    fun getChatMessageTextFragment(text: String, isHtml: Boolean): Fragment =
         ChatMessageTextFragment(text, isHtml, isClient, animated, customConfig)
 
-     fun getChatMessageButtonsFragment(links: ArrayList<Link>): Fragment =
+    fun getChatMessageButtonsFragment(links: ArrayList<Link>): Fragment =
         ChatMessageButtonsFragment(links, animated, customConfig)
 
-     fun getChatMessageImageFragment(url: String): Fragment =
+    fun getChatMessageImageFragment(url: String): Fragment =
         ChatMessageImageFragment(url, animated)
 
-     fun getChatMessageVideoFragment(source: String, url: String): Fragment =
+    fun getChatMessageVideoFragment(source: String, url: String): Fragment =
         ChatMessageVideoFragment(source, url)
 
-     fun getGenericJSONFragment(card: GenericCard): Fragment =
+    fun getGenericJSONFragment(card: GenericCard): Fragment =
         ChatMessageGenericJSONFragment(card, animated)
+
+    override fun onConfigReceived(backend: ChatBackend, config: ChatConfig) {
+        updateStyling(config)
+    }
+
+    override fun onFailure(backend: ChatBackend, error: Exception) {
+    }
 
 }

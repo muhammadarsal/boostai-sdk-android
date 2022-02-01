@@ -35,9 +35,10 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import no.boostai.sdk.ChatBackend.ChatBackend
 import no.boostai.sdk.ChatBackend.Objects.ChatConfig
-import no.boostai.sdk.ChatBackend.Objects.ChatConfigDefaults
+import no.boostai.sdk.ChatBackend.Objects.ChatPanelDefaults
 import no.boostai.sdk.ChatBackend.Objects.Response.APIMessage
 import no.boostai.sdk.R
+import no.boostai.sdk.UI.Events.BoostUIEvents
 
 open class ChatViewSettingsFragment(
     var menuDelegate: ChatViewSettingsDelegate? = null,
@@ -92,7 +93,8 @@ open class ChatViewSettingsFragment(
         val fadeAnimation = AnimationUtils.loadAnimation(context, R.anim.fade_in_fast)
         view.animation = fadeAnimation
 
-        val requestConversationFeedback = ChatBackend.config?.requestConversationFeedback ?: ChatConfigDefaults.requestConversationFeedback
+        val requestConversationFeedback = ChatBackend.config?.chatPanel?.settings?.requestFeedback
+            ?: ChatPanelDefaults.Settings.requestFeedback
         feedbackButton.visibility =
             if (requestConversationFeedback && !isDialog)
                 View.VISIBLE else View.GONE
@@ -107,6 +109,8 @@ open class ChatViewSettingsFragment(
             val intent = Intent(Intent.ACTION_VIEW)
             intent.data = Uri.parse(ChatBackend.privacyPolicyUrl)
             startActivity(intent)
+
+            BoostUIEvents.notifyObservers(BoostUIEvents.Event.privacyPolicyOpened)
         }
         poweredByImageView.setOnClickListener {
             Intent(Intent.ACTION_VIEW).let {
@@ -122,8 +126,8 @@ open class ChatViewSettingsFragment(
         ChatBackend.addConfigObserver(this)
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
+    override fun onDestroyView() {
+        super.onDestroyView()
 
         ChatBackend.removeConfigObserver(this)
     }
@@ -131,9 +135,11 @@ open class ChatViewSettingsFragment(
     fun updateStyling(config: ChatConfig?) {
         if (config == null) return
 
-        @ColorInt val primaryColor = customConfig?.primaryColor ?: config.primaryColor
+        @ColorInt val primaryColor = customConfig?.chatPanel?.styling?.primaryColor
+            ?: config.chatPanel?.styling?.primaryColor
             ?: ContextCompat.getColor(requireContext(), R.color.primaryColor)
-        @ColorInt val contrastColor = customConfig?.contrastColor ?: config.contrastColor
+        @ColorInt val contrastColor = customConfig?.chatPanel?.styling?.contrastColor
+            ?: config.chatPanel?.styling?.contrastColor
             ?: ContextCompat.getColor(requireContext(), R.color.contrastColor)
 
         view?.background = ColorDrawable(primaryColor)
@@ -204,12 +210,9 @@ open class ChatViewSettingsFragment(
                     intent.type = "text/plain"
                     intent.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.conversation))
                     intent.putExtra(Intent.EXTRA_TEXT, apiMessage.download)
-                    startActivity(
-                        Intent.createChooser(
-                            intent,
-                            getString(R.string.download_conversation)
-                        )
-                    )
+                    startActivity(Intent.createChooser(intent, getString(R.string.download_conversation)))
+
+                    BoostUIEvents.notifyObservers(BoostUIEvents.Event.conversationDownloaded, ChatBackend.conversationId)
                 }
             }
 
