@@ -134,6 +134,82 @@ val chatViewFragment = ChatViewFragment(customConfig = customConfig)
 
 See the "Configuring the Chat Panel" > "Options" chapter of the Chat Panel JavaScript documentation for an extensive overview of the options available for overriding.
 
+#### Config overview
+
+Here is a full overview over the available properties with corresponding types in the `ChatConfig` object (please note that this is not runnable code):
+
+```
+ChatConfig(
+    messages: Map<String, Messages>?
+    chatPanel: ChatPanel?(
+        header: Header?(
+            filters: Filters?
+            title: String?
+        ),
+        styling: Styling?(
+            pace: ConversationPace?
+            avatarShape: AvatarShape?
+            primaryColor: Int?
+            contrastColor: Int?
+            panelBackgroundColor: Int?
+            chatBubbles: ChatBubbles?(
+                userBackgroundColor: Int?
+                userTextColor: Int?
+                vaBackgroundColor: Int?
+                vaTextColor: Int?,
+                typingDotColor: Int?
+                typingBackgroundColor: Int
+            )
+            buttons: Buttons?(
+                backgroundColor: Int?
+                focusBackgroundColor: Int?
+                focusTextColor: Int?
+                multiline: Boolean?
+                textColor: Int?
+                variant: ButtonType?
+            )
+            composer: Composer?(
+                hide: Boolean?
+                composeLengthColor: Int?
+                frameBackgroundColor: Int?
+                sendButtonColor: Int?
+                sendButtonDisabledColor: Int?
+                textareaBackgroundColor: Int?
+                textareaBorderColor: Int?
+                textareaFocusBorderColor: Int?
+                textareaFocusOutlineColor: Int?
+                textareaTextColor: Int?
+                textareaPlaceholderTextColor: Int?
+                topBorderColor: Int?,
+                topBorderFocusColor: Int?
+            )
+            messageFeedback: MessageFeedback?(
+                hide: Boolean?
+                outlineColor: Int?
+                selectedColor: Int?
+            )
+        )
+        settings: Settings?(
+            authStartTriggerActionId: Int?
+            contextTopicIntentId: Int?
+            conversationId: String?
+            customPayload: String?
+            fileUploadServiceEndpointUrl: String?
+            messageFeedbackOnFirstAction: Boolean?
+            rememberConversation: Boolean?
+            requestFeedback: Boolean?
+            showLinkClickAsChatBubble: Boolean?
+            customPayload: String?
+            skill: String?
+            startLanguage: String?
+            startNewConversationOnResumeFailure: Boolean?
+            startTriggerActionId: Int?
+            userToken: String?
+        )
+    )
+)
+```
+
 #### Colors
 
 The order of precedence for colors is (1) custom config color, (2) server config color, and (3) default embedded SDK colors. Example of precedence: (1) custom config `primaryColor`, (2) server config `primaryColor` and (3) `R.color.primaryColor` from `colors.xml`.
