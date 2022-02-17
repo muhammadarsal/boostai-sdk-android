@@ -48,6 +48,7 @@ class MainActivity : AppCompatActivity(R.layout.activity_main),
         super.onCreate(savedInstanceState)
 
         ChatBackend.domain = "sdk.boost.ai"
+        ChatBackend.languageCode = "en-US"
 
         val customConfig = ChatConfig(
             chatPanel = ChatPanel(
@@ -81,12 +82,12 @@ class MainActivity : AppCompatActivity(R.layout.activity_main),
 
         adapter.addFragment(
             ChatViewFragment(customConfig = customConfig),
-            "Fullscreen"
+            getString(R.string.fullscreen)
         )
 
         adapter.addFragment(
             FloatingAvatarFragment(customConfig = customConfig),
-            "Floating"
+            getString(R.string.avatar)
         )
 
         tabLayout?.setupWithViewPager(viewPager)

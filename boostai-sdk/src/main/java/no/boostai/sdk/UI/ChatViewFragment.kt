@@ -250,7 +250,6 @@ open class ChatViewFragment(
             override fun onFailure(exception: Exception) {}
 
             override fun onReady(config: ChatConfig) {
-                updateStyling(config)
                 setBackendProperties(config)
 
                 // Should we resume a stored/remembered conversation?
@@ -265,7 +264,7 @@ open class ChatViewFragment(
             }
         })
 
-        updateStyling()
+        updateStyling(ChatBackend.config)
     }
 
     fun startOrResumeConversation(conversationId: String? = null) {

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fullscreen">Fullskjerm</string>
+    <string name="avatar">Avatar</string>
+    <string name="image">Bilde</string>
+    <string name="vide">Video</string>
+    <string name="back">Tilbake</string>
+    <string name="default_character_text">0 / 110</string>
+    <string name="chat_input_placeholder">Still ditt spørsmål her</string>
+    <string name="settings">Innstillinger</string>
+    <string name="close">Lukk</string>
+    <string name="minimize">Minimer</string>
+    <string name="filter">Filter</string>
+    <string name="boost_ai_logo">boost.ai logo</string>
+    <string name="conversation">Samtale</string>
+    <string name="powered_by">Powered by</string>
+    <string name="download_conversation">Last ned samtale</string>
+    <string name="delete_conversation">Slett samtale</string>
+    <string name="privacy_policy">Personvernerklæring</string>
+    <string name="thumbs_up">Tommel opp</string>
+    <string name="thumbs_down">Tommel ned</string>
+    <string name="upload_file">Last opp fil</string>
+    <string name="submit">Send</string>
+    <string name="secure_chat">Sikker chat</string>
+    <string name="external_link">Ekstern lenke</string>
+    <string name="do_you_want_to_give_me_feedback">Ønsker du å gi meg en tilbakemelding?</string>
+    <string name="feedback_text_hint">Skriv din tilbakemelding her</string>
+    <string name="unknown_error">En ukjent feil oppsto.</string>
+    <string name="thanks_for_the_feedback">Takk for tilbakemeldingen.\nVi setter pris på at du bidrar, det hjelper oss å skape en bedre kundeopplevelse.</string>
+</resources>

@@ -44,7 +44,7 @@ Add the boost.ai SDK library as a dependency in your app `build.gradle` file:
 
 ```kotlin
 dependencies { 
-  implementation 'com.github.BoostAI:mobile-sdk-android:1.1.0'
+  implementation 'com.github.BoostAI:mobile-sdk-android:1.1.1'
 }
 ```
 
@@ -67,7 +67,7 @@ Add the dependency:
 <dependency>
     <groupId>com.github.BoostAI</groupId>
     <artifactId>mobile-sdk-android</artifactId>
-    <version>1.1.0</version>
+    <version>1.1.1</version>
 </dependency>
 ```
 
@@ -373,6 +373,7 @@ class MyChatViewFragmentDelegate : ChatViewFragmentDelegate {
     override fun getChatMessagePartFragment(
         element: Element,
         responseId: String?,
+        isClient: Boolean,
         animated: Boolean
     ): Fragment? {
         when (element.type) {
@@ -396,7 +397,7 @@ class MyChatViewFragmentDelegate : ChatViewFragmentDelegate {
 }
 ```
 
-If you want more control, you can return a `Fragment` subclass from the `getChatMessageFragment(response: Response, animated: Boolean)` method or the `getChatMessagePartFragment(element: Element, responseId: String?, animated: Boolean = true)` method, which will be called for each message that arrives from the server or the user:
+If you want more control, you can return a `Fragment` subclass from the `getChatMessageFragment(response: Response, animated: Boolean)` method or the `getChatMessagePartFragment(element: Element, responseId: String?, isClient: Boolean = false, animated: Boolean = true)` method, which will be called for each message that arrives from the server or the user:
 
 ```kotlin
 class MyClass: ChatViewFragmentDelegate {
@@ -408,6 +409,7 @@ class MyClass: ChatViewFragmentDelegate {
 
     fun getChatMessagePartFragment(element: Element,
                                    responseId: String?,
+                                   isClient: Boolean = false,
                                    animated: Boolean = true): Fragment? {
         ...
     }

@@ -29,6 +29,7 @@ interface ChatViewFragmentDelegate {
 
     fun getChatMessagePartFragment(element: Element,
                                    responseId: String?,
+                                   isClient: Boolean = false,
                                    animated: Boolean = true): IChatMessagePartFragment?
 
     fun getSettingsFragment(): Fragment?

@@ -338,9 +338,23 @@ data class ConversationStateFiles (
 data class APIResponseError(val error: String)
 
 @Serializable
-class SDKException : Exception {
+open class SDKException : Exception {
     @SerialName("error")
     override var message: String = ""
+
+    constructor() : super()
+    constructor(message: String) : super(message)
+    constructor(message: String, cause: Throwable) : super(message, cause)
+    constructor(cause: Throwable) : super(cause)
+}
+
+open class SDKSerializationException : SDKException {
+    override var message: String = ""
+
+    val body: String
+        get() {
+            return message
+        }
 
     constructor() : super()
     constructor(message: String) : super(message)

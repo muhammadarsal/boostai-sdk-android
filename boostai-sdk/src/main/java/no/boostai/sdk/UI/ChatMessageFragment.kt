@@ -117,6 +117,7 @@ open class ChatMessageFragment(
                 var messagePartFragment = delegate?.getChatMessagePartFragment(
                     element,
                     response?.id,
+                    response?.source == SourceType.CLIENT,
                     animated
                 )
 
@@ -178,6 +179,7 @@ open class ChatMessageFragment(
                 val messagePartFragment = delegate?.getChatMessagePartFragment(
                     element,
                     response?.id,
+                    response?.source == SourceType.CLIENT,
                     animated
                 ) ?: getMessagePartFragment(element)
 

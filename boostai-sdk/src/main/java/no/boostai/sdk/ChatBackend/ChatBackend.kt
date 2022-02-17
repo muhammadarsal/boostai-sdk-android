@@ -70,7 +70,7 @@ object ChatBackend {
     var clean = false
 
     /// The current language of the bot
-    var languageCode: String = "no-US"
+    var languageCode: String = "en-US"
 
     var isBlocked = false
     var allowDeleteConversation = false
@@ -492,12 +492,18 @@ object ChatBackend {
                             handleJsonEvent(apiMessage)
                         }
                     } else {
-                        val exception = chatbackendJson.decodeFromString<SDKException>(body)
-                        Handler(Looper.getMainLooper()).post {
-                            listener?.onFailure(exception)
+                        try {
+                            val exception = chatbackendJson.decodeFromString<SDKException>(body)
+                            Handler(Looper.getMainLooper()).post {
+                                listener?.onFailure(exception)
+                            }
+                        } catch (e: SerializationException) {
+                            Handler(Looper.getMainLooper()).post {
+                                listener?.onFailure(SDKSerializationException(body))
+                            }
                         }
                     }
-                } catch (e: Exception) {
+                } catch (e: SerializationException) {
                     e.printStackTrace()
                     Handler(Looper.getMainLooper()).post {
                         listener?.onFailure(e)
