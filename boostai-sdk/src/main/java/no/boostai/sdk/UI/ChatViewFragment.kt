@@ -810,6 +810,7 @@ open class ChatViewFragment(
                 hideMenu()
                 // Start a new conversation
                 conversationId = null
+                conversationReference = null
                 startOrResumeConversation()
             }
 

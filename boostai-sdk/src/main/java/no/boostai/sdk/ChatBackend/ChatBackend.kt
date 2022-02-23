@@ -165,9 +165,21 @@ object ChatBackend {
     ///
     /// - Parameter message: An optional CommandStop if you want to set all the parameters of the stop command
     fun stop(message: CommandStop? = null, listener: APIMessageResponseListener? = null) {
-        if (this.allowDeleteConversation) {
-            send(message ?: CommandStop(conversationId, userToken), listener)
-        }
+        send(message ?: CommandStop(conversationId, userToken), object : APIMessageResponseListener {
+            override fun onFailure(exception: Exception) {
+                Handler(Looper.getMainLooper()).post {
+                    listener?.onFailure(exception)
+                }
+            }
+
+            override fun onResponse(apiMessage: APIMessage) {
+                Handler(Looper.getMainLooper()).post {
+                    resetConversationState()
+
+                    listener?.onResponse(apiMessage)
+                }
+            }
+        })
     }
 
     /// RESUME command
@@ -188,9 +200,7 @@ object ChatBackend {
 
             override fun onResponse(apiMessage: APIMessage) {
                 Handler(Looper.getMainLooper()).post {
-                    messages = ArrayList()
-                    conversationId = null
-                    userToken = null
+                    resetConversationState()
 
                     listener?.onResponse(apiMessage)
                 }
@@ -673,6 +683,14 @@ object ChatBackend {
     fun stopPolling() {
         pollTimer?.cancel()
         pollTimer = null
+    }
+
+    fun resetConversationState() {
+        messages = ArrayList()
+        conversationId = null
+        reference = ""
+        userToken = null
+        lastResponse = null
     }
 
     fun publishResponse(message: APIMessage?, error: Exception?) {
