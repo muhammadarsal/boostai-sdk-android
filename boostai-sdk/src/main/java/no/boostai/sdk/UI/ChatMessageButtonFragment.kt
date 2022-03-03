@@ -89,7 +89,8 @@ open class ChatMessageButtonFragment(
         textView = view.findViewById(R.id.chat_server_message_button_text)
         imageView = view.findViewById(R.id.chat_server_message_button_image_view)
 
-        val pace = ChatBackend.config?.chatPanel?.styling?.pace
+        val pace = customConfig?.chatPanel?.styling?.pace
+            ?: ChatBackend.config?.chatPanel?.styling?.pace
             ?: ChatPanelDefaults.Styling.pace
         val staggerDelay = TimingHelper.calculateStaggerDelay(pace = pace, idx = idx)
         val fragment = this

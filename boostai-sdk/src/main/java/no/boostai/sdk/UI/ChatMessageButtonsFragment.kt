@@ -74,7 +74,7 @@ open class ChatMessageButtonsFragment(
     }
 
     fun getChatMessageConsentFragment(links: ArrayList<Link>): Fragment =
-        ChatMessageConsentFragment(links, animated)
+        ChatMessageConsentFragment(links, animated, customConfig)
 
     fun getChatMessageButtonFragment(link: Link, index: Int): Fragment =
         ChatMessageButtonFragment(link, index, animated, customConfig)

@@ -28,8 +28,7 @@ object TimingHelper {
 
     fun calcTimeToRead(pace: Double): Long = (defaultDelay / pace).toLong()
 
-    fun timeUntilReveal(): Long {
-        val pace = ChatBackend.config?.chatPanel?.styling?.pace ?: ChatPanelDefaults.Styling.pace
+    fun timeUntilReveal(pace: ConversationPace): Long {
         val paceFactor = calculatePace(pace)
 
         return calcTimeToRead(paceFactor)

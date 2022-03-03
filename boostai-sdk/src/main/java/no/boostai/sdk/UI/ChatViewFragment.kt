@@ -587,7 +587,8 @@ open class ChatViewFragment(
                 )
                 .commitAllowingStateLoss()
             if (animated) {
-                val pace = ChatBackend.config?.chatPanel?.styling?.pace
+                val pace = customConfig?.chatPanel?.styling?.pace
+                    ?: ChatBackend.config?.chatPanel?.styling?.pace
                     ?: ChatPanelDefaults.Styling.pace
                 val paceFactor = TimingHelper.calculatePace(pace)
                 val staggerDelay = TimingHelper.calculateStaggerDelay(pace, 1)

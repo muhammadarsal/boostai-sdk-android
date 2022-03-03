@@ -129,7 +129,8 @@ open class ChatMessageFragment(
             }?.filterNotNull()
 
             fragments?.forEachIndexed { index, fragment ->
-                val pace = ChatBackend.config?.chatPanel?.styling?.pace
+                val pace = customConfig?.chatPanel?.styling?.pace
+                    ?: ChatBackend.config?.chatPanel?.styling?.pace
                     ?: ChatPanelDefaults.Styling.pace
                 val paceFactor = TimingHelper.calculatePace(pace)
                 val staggerDelay = TimingHelper.calculateStaggerDelay(pace, 1)
@@ -184,15 +185,20 @@ open class ChatMessageFragment(
                 ) ?: getMessagePartFragment(element)
 
                 messagePartFragment.let { fragment ->
-                    if (animated)
+                    if (animated) {
+                        val pace = customConfig?.chatPanel?.styling?.pace
+                            ?: ChatBackend.config?.chatPanel?.styling?.pace
+                            ?: ChatPanelDefaults.Styling.pace
                         Timer().schedule(
-                            TimingHelper.timeUntilReveal() * (fragments?.size ?: 0)
+                            TimingHelper.timeUntilReveal(pace) * (fragments?.size ?: 0)
                         ) {
                             Handler(Looper.getMainLooper()).post {
                                 addMessagePart(fragment, index)
                             }
                         }
-                    else addMessagePart(fragment, index)
+                    } else {
+                        addMessagePart(fragment, index)
+                    }
                 }
             }
             // If set, render a waiting indicator while waiting for server response
