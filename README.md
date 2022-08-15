@@ -20,6 +20,7 @@
     * [Commands](#commands)
     * [Post](#post)
     * [Send](#send)
+    * [Certificate pinning](#certificate-pinning)
 
 ## License
 
@@ -44,7 +45,7 @@ Add the boost.ai SDK library as a dependency in your app `build.gradle` file:
 
 ```kotlin
 dependencies { 
-  implementation 'com.github.BoostAI:mobile-sdk-android:1.1.3'
+  implementation 'com.github.BoostAI:mobile-sdk-android:1.1.4'
 }
 ```
 
@@ -67,7 +68,7 @@ Add the dependency:
 <dependency>
     <groupId>com.github.BoostAI</groupId>
     <artifactId>mobile-sdk-android</artifactId>
-    <version>1.1.3</version>
+    <version>1.1.4</version>
 </dependency>
 ```
 
@@ -636,3 +637,15 @@ ChatBackend.send(CommandStart(), object : ChatBackend.APIMessageResponseListener
 
 })
 ```
+
+### Certificate pinning
+
+If you want to pin SSL certificates used for the `ChatBackend` communication with the Boost API backend, you can enable this by setting `isCertificatePinningEnabled` to `true`:
+
+```kotlin
+ChatBackend.isCertificatePinningEnabled = true
+```
+
+Please note that the certificates are pinned against Amazon Root CAs, as described here: [Can I pin an application that's running on AWS to a certificate that was issued by AWS Certificate Manager (ACM)?](https://aws.amazon.com/premiumsupport/knowledge-center/pin-application-acm-certificate/)
+
+The list of root CAs pinned against can be found in the [Amazon Trust Repository](https://www.amazontrust.com/repository/).

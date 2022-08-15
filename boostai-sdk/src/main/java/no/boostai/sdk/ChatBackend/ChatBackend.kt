@@ -45,7 +45,22 @@ object ChatBackend {
         isLenient = true
     }
 
-    var client: OkHttpClient = OkHttpClient()
+    /// HTTP client
+    private var client: OkHttpClient = OkHttpClient()
+
+    /// Enable or disable certificate pinning
+    var isCertificatePinningEnabled = false
+        set(enabled) {
+            field = enabled
+            if (enabled) {
+                client = OkHttpClient.Builder()
+                    .certificatePinner(BoostCertificatePinner.getCertificatePinner())
+                    .build()
+            } else {
+                client = OkHttpClient()
+            }
+        }
+
     var domain: String = ""
 
     /// The conversation Id. If you store this for later usage, you need to set this instead of calling start()

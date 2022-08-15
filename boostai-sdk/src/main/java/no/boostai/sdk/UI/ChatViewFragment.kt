@@ -45,7 +45,6 @@ import no.boostai.sdk.R
 import no.boostai.sdk.UI.Events.BoostUIEvents
 import no.boostai.sdk.UI.Helpers.TimingHelper
 import java.util.*
-import kotlin.collections.ArrayList
 import kotlin.concurrent.schedule
 
 open class ChatViewFragment(
@@ -124,8 +123,8 @@ open class ChatViewFragment(
         ChatBackend.addMessageObserver(this)
     }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
+    override fun onDestroy() {
+        super.onDestroy()
 
         ChatBackend.removeConfigObserver(this)
         ChatBackend.removeMessageObserver(this)
