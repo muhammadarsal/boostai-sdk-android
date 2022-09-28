@@ -43,6 +43,7 @@ object ChatBackend {
     val chatbackendJson = Json {
         ignoreUnknownKeys = true
         isLenient = true
+        explicitNulls = false
     }
 
     /// HTTP client

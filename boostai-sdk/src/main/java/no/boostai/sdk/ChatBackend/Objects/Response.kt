@@ -132,7 +132,7 @@ Response from an interactive conversation
 @Parcelize
 data class Response (
     /// The id of the response
-    val id: String,
+    val id: String?,
     /// The source of the response. Either "bot" or "client"
     val source: SourceType,
     /// bcp-47 code
