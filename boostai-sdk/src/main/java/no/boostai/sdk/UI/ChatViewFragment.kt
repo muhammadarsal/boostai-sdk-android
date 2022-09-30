@@ -275,7 +275,7 @@ open class ChatViewFragment(
         // Start new conversation if no messages exists
         if (messages.size == 0) {
             showWaitingForAgentResponseIndicator()
-            if (conversationId != null) {
+            if (conversationId != null || ChatBackend.userToken != null) {
                 // Make sure we don't animate in the message when resuming a conversation
                 animateMessages = false
 

@@ -56,6 +56,7 @@ open class StatusMessageFragment(var message: String? = null, var isError: Boole
 
         val textColor = if (isError) android.R.color.holo_red_dark else R.color.textColor
         textView.setTextColor(ContextCompat.getColor(requireContext(), textColor))
+        textView.textAlignment = TextView.TEXT_ALIGNMENT_CENTER
         textView.text = message
     }
 }

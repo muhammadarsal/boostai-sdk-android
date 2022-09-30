@@ -201,7 +201,12 @@ object ChatBackend {
     /// RESUME command
     /// - Parameter message: An optional CommandResume if you want to set all the parameters of the resume command
     public fun resume(message: CommandResume? = null, listener: APIMessageResponseListener? = null) {
-        send(message ?: CommandResume(conversationId, userToken, skill = skill), listener)
+        val m = message ?: CommandResume()
+        m.conversationId = m.conversationId
+        m.userToken = m.userToken ?: userToken
+        m.skill = m.skill ?: skill
+
+        send(m, listener)
     }
 
     /// DELETE command
@@ -621,6 +626,8 @@ object ChatBackend {
 
                 getConfig()
             }
+        } else if (apiMessage.responses?.last() != null) {
+            this.languageCode = apiMessage.responses.last().language
         }
     }
 
