@@ -626,8 +626,8 @@ object ChatBackend {
 
                 getConfig()
             }
-        } else if (apiMessage.responses?.last() != null) {
-            this.languageCode = apiMessage.responses.last().language
+        } else if ((apiMessage.responses?.count() ?: 0) > 0) {
+            this.languageCode = apiMessage.responses!!.last().language
         }
     }
 
