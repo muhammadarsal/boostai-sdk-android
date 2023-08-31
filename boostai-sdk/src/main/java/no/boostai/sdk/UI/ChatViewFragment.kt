@@ -301,6 +301,15 @@ open class ChatViewFragment(
                     override fun onResponse(apiMessage: APIMessage) {
                         // Enable animation of new messages (conversation has been resumed at this point)
                         animateMessages = true
+
+                        val startTriggerActionId = customConfig?.chatPanel?.settings?.startTriggerActionId
+                            ?: ChatBackend.config?.chatPanel?.settings?.startTriggerActionId
+                        val triggerActionOnResume = customConfig?.chatPanel?.settings?.triggerActionOnResume
+                            ?: ChatBackend.config?.chatPanel?.settings?.triggerActionOnResume
+                            ?: ChatPanelDefaults.Settings.triggerActionOnResume
+                        if (startTriggerActionId != null && triggerActionOnResume) {
+                            ChatBackend.triggerAction(startTriggerActionId.toString())
+                        }
                     }
                 })
             } else {
@@ -747,13 +756,13 @@ open class ChatViewFragment(
 
         // Add filters as a submenu
         val filterMenu = filterItem.subMenu
-        filterMenu.clear()
+        filterMenu?.clear()
         ChatBackend.config?.chatPanel?.header?.filters?.options?.forEach {
-            filterMenu.add(0, it.id, Menu.NONE, it.title)
+            filterMenu?.add(0, it.id, Menu.NONE, it.title)
         }
 
         // Only show the filter selector if we have any filters
-        filterItem.isVisible = filterMenu.size() > 0
+        filterItem.isVisible = (filterMenu?.size() ?: 0) > 0
 
         minimizeItem.isVisible = isDialog
         closeItem.isVisible = isDialog

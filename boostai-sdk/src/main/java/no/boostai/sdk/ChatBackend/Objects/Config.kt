@@ -478,6 +478,9 @@ data class Settings (
     /// Action to trigger instead of the welcome message when the chat window opens
     val startTriggerActionId: Int? = null,
 
+    /// Should we trigger action on resume (requires a startTriggerActionId to be set). Default false.
+    val triggerActionOnResume: Boolean? = null,
+
     /// Sets the user token generator for authenticated conversations
     val userToken: String? = null,
 ) : Parcelable
@@ -516,6 +519,7 @@ class ChatPanelDefaults {
             const val requestFeedback = true
             const val showLinkClickAsChatBubble = false
             const val startNewConversationOnResumeFailure = true
+            const val triggerActionOnResume = false
         }
     }
 }

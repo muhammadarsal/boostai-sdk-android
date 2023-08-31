@@ -6,17 +6,17 @@ plugins {
     id 'maven-publish'
 }
 
-def sdkVersion = '1.1.8'
+def sdkVersion = '1.1.9'
 
 group = 'com.github.BoostAI'
 version = sdkVersion
 
 android {
-    compileSdk 31
+    compileSdk 33
 
     defaultConfig {
         minSdk 23
-        targetSdk 31
+        targetSdk 33
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
