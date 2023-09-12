@@ -273,13 +273,26 @@ open class ChatViewFragment(
         messages.forEach { handleReceivedMessage(it, false) }
         isBlocked = ChatBackend.isBlocked
         // Start new conversation if no messages exists
-        if (messages.size == 0) {
+        if (messages.size == 0 || ChatBackend.userToken != null) {
             showWaitingForAgentResponseIndicator()
+
             if (conversationId != null || ChatBackend.userToken != null) {
                 // Make sure we don't animate in the message when resuming a conversation
                 animateMessages = false
 
-                ChatBackend.resume(CommandResume(conversationId), object : ChatBackend.APIMessageResponseListener {
+                val startTriggerActionId = customConfig?.chatPanel?.settings?.startTriggerActionId
+                    ?: ChatBackend.config?.chatPanel?.settings?.startTriggerActionId
+                val triggerActionOnResume = customConfig?.chatPanel?.settings?.triggerActionOnResume
+                    ?: ChatBackend.config?.chatPanel?.settings?.triggerActionOnResume
+                    ?: ChatPanelDefaults.Settings.triggerActionOnResume
+
+                // Skip welcome message if userToken and startTriggerActionId is defined and triggerActionOnResume is true
+                val skipWelcomeMessage = ChatBackend.userToken != null && startTriggerActionId != null && triggerActionOnResume
+
+                val resumeCommand = CommandResume(conversationId)
+                resumeCommand.skipWelcomeMessage = skipWelcomeMessage
+
+                ChatBackend.resume(resumeCommand, object : ChatBackend.APIMessageResponseListener {
                     override fun onFailure(exception: Exception) {
                         animateMessages = true
 
@@ -302,11 +315,6 @@ open class ChatViewFragment(
                         // Enable animation of new messages (conversation has been resumed at this point)
                         animateMessages = true
 
-                        val startTriggerActionId = customConfig?.chatPanel?.settings?.startTriggerActionId
-                            ?: ChatBackend.config?.chatPanel?.settings?.startTriggerActionId
-                        val triggerActionOnResume = customConfig?.chatPanel?.settings?.triggerActionOnResume
-                            ?: ChatBackend.config?.chatPanel?.settings?.triggerActionOnResume
-                            ?: ChatPanelDefaults.Settings.triggerActionOnResume
                         if (startTriggerActionId != null && triggerActionOnResume) {
                             ChatBackend.triggerAction(startTriggerActionId.toString())
                         }

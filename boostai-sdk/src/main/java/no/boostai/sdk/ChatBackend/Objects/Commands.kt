@@ -326,6 +326,10 @@ class CommandResume: IConversation {
 
     /// Sets the Human Chat skill for the conversation
     var skill: String? = null
+
+    /// Should we skip displaying the welcome message?
+    @SerialName("skip_welcome_message")
+    var skipWelcomeMessage = false
 }
 
 /**
