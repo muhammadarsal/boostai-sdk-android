@@ -19,3 +19,9 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+-dontwarn org.bouncycastle.jsse.*
+-dontwarn org.bouncycastle.jsse.provider.*
+-dontwarn org.conscrypt.*
+-dontwarn org.openjsse.javax.net.ssl.*
+-dontwarn org.openjsse.net.ssl.*
