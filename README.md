@@ -45,7 +45,7 @@ Add the boost.ai SDK library as a dependency in your app `build.gradle` file:
 
 ```kotlin
 dependencies { 
-  implementation 'com.github.BoostAI:mobile-sdk-android:1.1.12'
+  implementation 'com.github.BoostAI:mobile-sdk-android:1.1.15'
 }
 ```
 
@@ -68,7 +68,7 @@ Add the dependency:
 <dependency>
     <groupId>com.github.BoostAI</groupId>
     <artifactId>mobile-sdk-android</artifactId>
-    <version>1.1.12</version>
+    <version>1.1.15</version>
 </dependency>
 ```
 
@@ -87,7 +87,7 @@ See the `app` folder for a demo of how to set up chat view via a floating avatar
 To start off, we need to configure the ChatBackend singleton object:
 
 ```kotlin
-ChatBackend.domain = "sdk.boost.ai"
+ChatBackend.domain = "your-name.boost.ai" // Your boost.ai server domain name
 ```
 
 ### Config
@@ -449,7 +449,7 @@ class MyFragment : Fragment, BoostUIEvents.Observer {
 The `ChatBackend` class is the main entry point for everything backend/API related. As a minimum, it needs a domain to point to:
 
 ```swift
-ChatBackend.domain = "sdk.boost.ai" // Replace with a possible custom domain
+ChatBackend.domain = "your-name.boost.ai" // Your boost.ai server domain name
 ```
 
 If you use the `ChatBackend` outside of the provided UI classes, always start by calling `ChatBackend.getConfig(configReadyListener: ConfigReadyListener? = null)` to get the server config object, which has colors and string etc. that is needed for the UI.
