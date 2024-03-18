@@ -6,7 +6,7 @@ plugins {
     id 'maven-publish'
 }
 
-def sdkVersion = '1.1.15'
+def sdkVersion = '1.1.16'
 
 group = 'com.github.BoostAI'
 version = sdkVersion
@@ -29,12 +29,6 @@ android {
         }
     }
 
-    publishing {
-        multipleVariants {
-            allVariants()
-        }
-    }
-
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
@@ -48,8 +42,20 @@ android {
 afterEvaluate {
     publishing {
         publications {
-            allVariants(MavenPublication) {
-                from components.default
+            // Creates a Maven publication called "release".
+            release(MavenPublication) {
+                // Applies the component for the release build variant.
+                from components.release
+
+                // You can then customize attributes of the publication as shown below.
+                groupId = 'com.github.BoostAI'
+                artifactId = 'mobile-sdk-android'
+                version = sdkVersion
+            }
+            // Creates a Maven publication called “debug”.
+            debug(MavenPublication) {
+                // Applies the component for the debug build variant.
+                from components.debug
 
                 groupId = 'com.github.BoostAI'
                 artifactId = 'mobile-sdk-android'
