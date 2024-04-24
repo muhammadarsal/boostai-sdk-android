@@ -100,6 +100,7 @@ open class ChatViewFragment(
         super.onCreate(savedInstanceState)
 
         conversationId = customConfig?.chatPanel?.settings?.conversationId
+            ?: ChatBackend.customConfig?.chatPanel?.settings?.conversationId
 
         val bundle = savedInstanceState ?: arguments
         bundle?.let {
@@ -197,22 +198,28 @@ open class ChatViewFragment(
         editText.onFocusChangeListener = View.OnFocusChangeListener { _, hasFocus ->
             // Update chat input color
             val primaryColor = customConfig?.chatPanel?.styling?.primaryColor
+                ?: ChatBackend.customConfig?.chatPanel?.styling?.primaryColor
                 ?: ChatBackend.config?.chatPanel?.styling?.primaryColor
                 ?: ContextCompat.getColor(requireContext(), R.color.primaryColor)
             val textareaBorderColor = customConfig?.chatPanel?.styling?.composer?.textareaBorderColor
+                ?: ChatBackend.customConfig?.chatPanel?.styling?.composer?.textareaBorderColor
                 ?: ChatBackend.config?.chatPanel?.styling?.composer?.textareaBorderColor
                 ?: ContextCompat.getColor(requireContext(), R.color.gray)
             val textareaFocusBorderColor = customConfig?.chatPanel?.styling?.composer?.textareaFocusBorderColor
+                ?: ChatBackend.customConfig?.chatPanel?.styling?.composer?.textareaFocusBorderColor
                 ?: ChatBackend.config?.chatPanel?.styling?.composer?.textareaFocusBorderColor
                 ?: primaryColor
             val textareaFocusOutlineColor =
                 customConfig?.chatPanel?.styling?.composer?.textareaFocusOutlineColor
+                    ?: ChatBackend.customConfig?.chatPanel?.styling?.composer?.textareaFocusOutlineColor
                     ?: ChatBackend.config?.chatPanel?.styling?.composer?.textareaFocusOutlineColor
                     ?: (primaryColor and 0x00FFFFFF or 0x77000000)
             val defaultTopBorderColor = customConfig?.chatPanel?.styling?.composer?.topBorderColor
+                ?: ChatBackend.customConfig?.chatPanel?.styling?.composer?.topBorderColor
                 ?: ChatBackend.config?.chatPanel?.styling?.composer?.topBorderColor
                 ?: ContextCompat.getColor(requireContext(), R.color.gray)
             val topBorderFocusColor = customConfig?.chatPanel?.styling?.composer?.topBorderFocusColor
+                ?: ChatBackend.customConfig?.chatPanel?.styling?.composer?.topBorderFocusColor
                 ?: ChatBackend.config?.chatPanel?.styling?.composer?.topBorderFocusColor
                 ?: defaultTopBorderColor
 
@@ -253,6 +260,7 @@ open class ChatViewFragment(
 
                 // Should we resume a stored/remembered conversation?
                 val rememberConversation = customConfig?.chatPanel?.settings?.rememberConversation
+                    ?: ChatBackend.customConfig?.chatPanel?.settings?.rememberConversation
                     ?: ChatBackend.config?.chatPanel?.settings?.rememberConversation
                     ?: ChatPanelDefaults.Settings.rememberConversation
                 if (conversationId == null && rememberConversation) {
@@ -281,8 +289,10 @@ open class ChatViewFragment(
                 animateMessages = false
 
                 val startTriggerActionId = customConfig?.chatPanel?.settings?.startTriggerActionId
+                    ?: ChatBackend.customConfig?.chatPanel?.settings?.startTriggerActionId
                     ?: ChatBackend.config?.chatPanel?.settings?.startTriggerActionId
                 val triggerActionOnResume = customConfig?.chatPanel?.settings?.triggerActionOnResume
+                    ?: ChatBackend.customConfig?.chatPanel?.settings?.triggerActionOnResume
                     ?: ChatBackend.config?.chatPanel?.settings?.triggerActionOnResume
                     ?: ChatPanelDefaults.Settings.triggerActionOnResume
 
@@ -298,14 +308,15 @@ open class ChatViewFragment(
 
                         val startNewMessage =
                             customConfig?.chatPanel?.settings?.startNewConversationOnResumeFailure
+                                ?: ChatBackend.customConfig?.chatPanel?.settings?.startNewConversationOnResumeFailure
                                 ?: ChatPanelDefaults.Settings.startNewConversationOnResumeFailure
                         if (startNewMessage) {
                             ChatBackend.start(
                                 CommandStart(
-                                    language = customConfig?.chatPanel?.settings?.startLanguage,
-                                    contextIntentId = customConfig?.chatPanel?.settings?.contextTopicIntentId,
-                                    triggerAction = customConfig?.chatPanel?.settings?.startTriggerActionId,
-                                    authTriggerAction = customConfig?.chatPanel?.settings?.authStartTriggerActionId,
+                                    language = customConfig?.chatPanel?.settings?.startLanguage ?: ChatBackend.customConfig?.chatPanel?.settings?.startLanguage,
+                                    contextIntentId = customConfig?.chatPanel?.settings?.contextTopicIntentId ?: ChatBackend.customConfig?.chatPanel?.settings?.contextTopicIntentId,
+                                    triggerAction = customConfig?.chatPanel?.settings?.startTriggerActionId ?: ChatBackend.customConfig?.chatPanel?.settings?.startTriggerActionId,
+                                    authTriggerAction = customConfig?.chatPanel?.settings?.authStartTriggerActionId ?: ChatBackend.customConfig?.chatPanel?.settings?.authStartTriggerActionId,
                                 )
                             )
                         }
@@ -323,10 +334,10 @@ open class ChatViewFragment(
             } else {
                 ChatBackend.start(
                     CommandStart(
-                        language = customConfig?.chatPanel?.settings?.startLanguage,
-                        contextIntentId = customConfig?.chatPanel?.settings?.contextTopicIntentId,
-                        triggerAction = customConfig?.chatPanel?.settings?.startTriggerActionId,
-                        authTriggerAction = customConfig?.chatPanel?.settings?.authStartTriggerActionId,
+                        language = customConfig?.chatPanel?.settings?.startLanguage ?: ChatBackend.customConfig?.chatPanel?.settings?.startLanguage,
+                        contextIntentId = customConfig?.chatPanel?.settings?.contextTopicIntentId ?: ChatBackend.customConfig?.chatPanel?.settings?.contextTopicIntentId,
+                        triggerAction = customConfig?.chatPanel?.settings?.startTriggerActionId ?: ChatBackend.customConfig?.chatPanel?.settings?.startTriggerActionId,
+                        authTriggerAction = customConfig?.chatPanel?.settings?.authStartTriggerActionId ?: ChatBackend.customConfig?.chatPanel?.settings?.authStartTriggerActionId,
                     )
                 )
             }
@@ -372,6 +383,7 @@ open class ChatViewFragment(
 
         // Save conversation id if applicable
         val rememberConversation = customConfig?.chatPanel?.settings?.rememberConversation
+            ?: ChatBackend.customConfig?.chatPanel?.settings?.rememberConversation
             ?: ChatBackend.config?.chatPanel?.settings?.rememberConversation
             ?: ChatPanelDefaults.Settings.rememberConversation
         if (rememberConversation) {
@@ -391,6 +403,7 @@ open class ChatViewFragment(
             }
             val messageFeedbackOnFirstAction =
                 customConfig?.chatPanel?.settings?.messageFeedbackOnFirstAction
+                    ?: ChatBackend.customConfig?.chatPanel?.settings?.messageFeedbackOnFirstAction
                     ?: ChatPanelDefaults.Settings.messageFeedbackOnFirstAction
             val isWelcomeMessage = messages.indexOf(message) <= firstNonBlockedMessageIndex
 
@@ -478,50 +491,59 @@ open class ChatViewFragment(
         updateSubmitButtonState()
 
         val hide = customConfig?.chatPanel?.styling?.composer?.hide
+            ?: ChatBackend.customConfig?.chatPanel?.styling?.composer?.hide
             ?: config?.chatPanel?.styling?.composer?.hide
             ?: ChatPanelDefaults.Styling.Composer.hide
         chatInputWrapper.visibility = if (hide) View.GONE else View.VISIBLE
 
         val frameBackgroundColor = customConfig?.chatPanel?.styling?.composer?.frameBackgroundColor
+            ?: ChatBackend.customConfig?.chatPanel?.styling?.composer?.frameBackgroundColor
             ?: config?.chatPanel?.styling?.composer?.frameBackgroundColor
         frameBackgroundColor?.let {
             chatInputWrapper.setBackgroundColor(it)
         }
 
         val composeLengthColor = customConfig?.chatPanel?.styling?.composer?.composeLengthColor
+            ?: ChatBackend.customConfig?.chatPanel?.styling?.composer?.composeLengthColor
             ?: config?.chatPanel?.styling?.composer?.composeLengthColor
         composeLengthColor?.let {
             characterCountTextView.setTextColor(it)
         }
 
         val textareaBackgroundColor = customConfig?.chatPanel?.styling?.composer?.textareaBackgroundColor
+            ?: ChatBackend.customConfig?.chatPanel?.styling?.composer?.textareaBackgroundColor
             ?: config?.chatPanel?.styling?.composer?.textareaBackgroundColor
             ?: ContextCompat.getColor(requireContext(), android.R.color.white)
         chatInputInner.background.setTint(textareaBackgroundColor)
 
         val textareaBorderColor = customConfig?.chatPanel?.styling?.composer?.textareaBorderColor
+            ?: ChatBackend.customConfig?.chatPanel?.styling?.composer?.textareaBorderColor
             ?: config?.chatPanel?.styling?.composer?.textareaBorderColor
             ?: ContextCompat.getColor(requireContext(), R.color.gray)
         chatInputBorder.background.setTint(textareaBorderColor)
 
         val textareaTextColor = customConfig?.chatPanel?.styling?.composer?.textareaTextColor
+            ?: ChatBackend.customConfig?.chatPanel?.styling?.composer?.textareaTextColor
             ?: config?.chatPanel?.styling?.composer?.textareaTextColor
         textareaTextColor?.let {
             editText.setTextColor(it)
         }
 
         val textareaPlaceholderTextColor = customConfig?.chatPanel?.styling?.composer?.textareaPlaceholderTextColor
+            ?: ChatBackend.customConfig?.chatPanel?.styling?.composer?.textareaPlaceholderTextColor
             ?: config?.chatPanel?.styling?.composer?.textareaPlaceholderTextColor
         textareaPlaceholderTextColor?.let {
             editText.setHintTextColor(it)
         }
 
         val topBorderColor = customConfig?.chatPanel?.styling?.composer?.topBorderColor
+            ?: ChatBackend.customConfig?.chatPanel?.styling?.composer?.topBorderColor
             ?: config?.chatPanel?.styling?.composer?.topBorderColor
             ?: ContextCompat.getColor(requireContext(), R.color.gray)
         chatInputWrapperTopBorder.setBackgroundColor(topBorderColor)
 
         val panelBackgroundColor = customConfig?.chatPanel?.styling?.panelBackgroundColor
+            ?: ChatBackend.customConfig?.chatPanel?.styling?.panelBackgroundColor
             ?: config?.chatPanel?.styling?.panelBackgroundColor
         panelBackgroundColor?.let {
             chatMessagesLayout.setBackgroundColor(panelBackgroundColor)
@@ -532,14 +554,17 @@ open class ChatViewFragment(
     fun setBackendProperties(config: ChatConfig? = null) {
         val fileUploadServiceEndpointUrl =
             customConfig?.chatPanel?.settings?.fileUploadServiceEndpointUrl
+                ?: ChatBackend.customConfig?.chatPanel?.settings?.fileUploadServiceEndpointUrl
                 ?: config?.chatPanel?.settings?.fileUploadServiceEndpointUrl
         val userToken = customConfig?.chatPanel?.settings?.userToken
+            ?: ChatBackend.customConfig?.chatPanel?.settings?.userToken
             ?: config?.chatPanel?.settings?.userToken
 
         fileUploadServiceEndpointUrl?.let { ChatBackend.fileUploadServiceEndpointUrl = it }
         userToken?.let { ChatBackend.userToken = it }
 
         val filterValues = customConfig?.chatPanel?.header?.filters?.filterValues
+            ?: ChatBackend.customConfig?.chatPanel?.header?.filters?.filterValues
             ?: config?.chatPanel?.header?.filters?.filterValues
         if (ChatBackend.filterValues == null && filterValues != null) {
             ChatBackend.filterValues = filterValues
@@ -569,11 +594,14 @@ open class ChatViewFragment(
     fun updateSubmitButtonState(text: String? = null) {
         val currentText = text ?: editText.text.toString()
         val primaryColor = customConfig?.chatPanel?.styling?.primaryColor
+            ?: ChatBackend.customConfig?.chatPanel?.styling?.primaryColor
             ?: ChatBackend.config?.chatPanel?.styling?.primaryColor
             ?: ContextCompat.getColor(requireContext(), R.color.primaryColor)
         val sendButtonColor = customConfig?.chatPanel?.styling?.composer?.sendButtonColor
+            ?: ChatBackend.customConfig?.chatPanel?.styling?.composer?.sendButtonColor
             ?: ChatBackend.config?.chatPanel?.styling?.composer?.sendButtonColor ?: primaryColor
         val sendButtonDisabledColor = customConfig?.chatPanel?.styling?.composer?.sendButtonDisabledColor
+            ?: ChatBackend.customConfig?.chatPanel?.styling?.composer?.sendButtonDisabledColor
             ?: ChatBackend.config?.chatPanel?.styling?.composer?.sendButtonDisabledColor
             ?: ContextCompat.getColor(requireContext(), R.color.gray)
         val isEnabled = currentText.trim().isNotEmpty() && !isBlocked
@@ -610,6 +638,7 @@ open class ChatViewFragment(
                 .commitAllowingStateLoss()
             if (animated) {
                 val pace = customConfig?.chatPanel?.styling?.pace
+                    ?: ChatBackend.customConfig?.chatPanel?.styling?.pace
                     ?: ChatBackend.config?.chatPanel?.styling?.pace
                     ?: ChatPanelDefaults.Styling.pace
                 val paceFactor = TimingHelper.calculatePace(pace)
@@ -741,9 +770,11 @@ open class ChatViewFragment(
 
         val selectedFilterValues = ChatBackend.filterValues
             ?: customConfig?.chatPanel?.header?.filters?.filterValues
+            ?: ChatBackend.customConfig?.chatPanel?.header?.filters?.filterValues
             ?: ChatBackend.config?.chatPanel?.header?.filters?.filterValues
             ?: emptyList()
         val options = customConfig?.chatPanel?.header?.filters?.options
+            ?: ChatBackend.customConfig?.chatPanel?.header?.filters?.options
             ?: ChatBackend.config?.chatPanel?.header?.filters?.options
         val initialFilter = options?.first()
         val hasSelectedFilterValues = selectedFilterValues?.isNotEmpty()
@@ -756,6 +787,7 @@ open class ChatViewFragment(
         val availableFilterValues = currentFilter?.values ?: emptyList()
 
         @ColorInt val tintColor = customConfig?.chatPanel?.styling?.contrastColor
+            ?: ChatBackend.customConfig?.chatPanel?.styling?.contrastColor
             ?: ChatBackend.config?.chatPanel?.styling?.contrastColor
             ?: ContextCompat.getColor(requireContext(), R.color.contrastColor)
 

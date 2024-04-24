@@ -112,6 +112,9 @@ object ChatBackend {
     var vanId: Int? = null
     var config: ChatConfig? = null
 
+    // Override default config (that usually comes from boost.ai server)
+    var customConfig: ChatConfig? = null
+
     fun getChatUrl(): URL {
         return URL("https://" + domain + "/api/chat/v2")
     }

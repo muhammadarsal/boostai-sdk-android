@@ -45,7 +45,7 @@ Add the boost.ai SDK library as a dependency in your app `build.gradle` file:
 
 ```kotlin
 dependencies { 
-  implementation 'com.github.BoostAI:mobile-sdk-android:1.1.17'
+  implementation 'com.github.BoostAI:mobile-sdk-android:1.1.18'
 }
 ```
 
@@ -68,7 +68,7 @@ Add the dependency:
 <dependency>
     <groupId>com.github.BoostAI</groupId>
     <artifactId>mobile-sdk-android</artifactId>
-    <version>1.1.17</version>
+    <version>1.1.18</version>
 </dependency>
 ```
 
@@ -106,7 +106,7 @@ ChatBackend.onReady(object : ChatBackend.ConfigReadyListener {
 })
 ```
 
-If you want to locally override some of the config variables, you can pass a custom `ChatConfig` object to a `ChatViewFragment`:
+If you want to locally override some of the config variables, you can set a custom `ChatConfig` object on the `ChatBackend` object:
 
 ```kotlin
 val customConfig = ChatConfig(
@@ -130,7 +130,7 @@ val customConfig = ChatConfig(
     ),
 )
 
-val chatViewFragment = ChatViewFragment(customConfig = customConfig)
+ChatBackend.customConfig = customConfig
 ```
 
 See the "Configuring the Chat Panel" > "Options" chapter of the Chat Panel JavaScript documentation for an extensive overview of the options available for overriding.
@@ -285,11 +285,6 @@ To present the chat in a new activity:
 ```kotlin
 Intent(mContext, ChatViewActivity::class.java).let { intent ->
     intent.putExtra(ChatViewActivity.IS_DIALOG, true)
-    
-    // Pass custom config if needed
-    /*customConfig?.let {
-        config -> intent.putExtra(ChatViewActivity.CUSTOM_CONFIG, config)
-    }*/
     
     startActivity(intent)
 }

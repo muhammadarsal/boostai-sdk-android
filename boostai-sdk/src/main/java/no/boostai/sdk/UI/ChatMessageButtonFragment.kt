@@ -90,6 +90,7 @@ open class ChatMessageButtonFragment(
         imageView = view.findViewById(R.id.chat_server_message_button_image_view)
 
         val pace = customConfig?.chatPanel?.styling?.pace
+            ?: ChatBackend.customConfig?.chatPanel?.styling?.pace
             ?: ChatBackend.config?.chatPanel?.styling?.pace
             ?: ChatPanelDefaults.Styling.pace
         val staggerDelay = TimingHelper.calculateStaggerDelay(pace = pace, idx = idx)
@@ -111,6 +112,7 @@ open class ChatMessageButtonFragment(
         else view.alpha = 1.0F
 
         val multiline = customConfig?.chatPanel?.styling?.buttons?.multiline
+            ?: ChatBackend.customConfig?.chatPanel?.styling?.buttons?.multiline
             ?: ChatBackend.config?.chatPanel?.styling?.buttons?.multiline
             ?: false
 
@@ -134,6 +136,7 @@ open class ChatMessageButtonFragment(
 
                 val showLinkClickAsChatBubble =
                     customConfig?.chatPanel?.settings?.showLinkClickAsChatBubble
+                        ?: ChatBackend.customConfig?.chatPanel?.settings?.showLinkClickAsChatBubble
                         ?: ChatBackend.config?.chatPanel?.settings?.showLinkClickAsChatBubble
                         ?: ChatPanelDefaults.Settings.showLinkClickAsChatBubble
 
@@ -145,16 +148,20 @@ open class ChatMessageButtonFragment(
 
         view.onFocusChangeListener = View.OnFocusChangeListener { _, hasFocus ->
             val backgroundColor = customConfig?.chatPanel?.styling?.buttons?.backgroundColor
+                ?: ChatBackend.customConfig?.chatPanel?.styling?.buttons?.backgroundColor
                 ?: ChatBackend.config?.chatPanel?.styling?.buttons?.backgroundColor
                 ?: ContextCompat.getColor(requireContext(), R.color.buttonBackgroundColor)
             val focusBackgroundColor =
                 customConfig?.chatPanel?.styling?.buttons?.focusBackgroundColor
+                    ?: ChatBackend.customConfig?.chatPanel?.styling?.buttons?.focusBackgroundColor
                     ?: ChatBackend.config?.chatPanel?.styling?.buttons?.focusBackgroundColor
                     ?: backgroundColor
             val textColor = customConfig?.chatPanel?.styling?.buttons?.textColor
+                ?: ChatBackend.customConfig?.chatPanel?.styling?.buttons?.textColor
                 ?: ChatBackend.config?.chatPanel?.styling?.buttons?.textColor
                 ?: ContextCompat.getColor(requireContext(), android.R.color.black)
             val focusTextColor = customConfig?.chatPanel?.styling?.buttons?.focusTextColor
+                ?: ChatBackend.customConfig?.chatPanel?.styling?.buttons?.focusTextColor
                 ?: ChatBackend.config?.chatPanel?.styling?.buttons?.focusTextColor
                 ?: textColor
 
@@ -193,9 +200,11 @@ open class ChatMessageButtonFragment(
         if (config == null) return
 
         @ColorInt val textColor = customConfig?.chatPanel?.styling?.buttons?.textColor
+            ?: ChatBackend.customConfig?.chatPanel?.styling?.buttons?.textColor
             ?: config.chatPanel?.styling?.buttons?.textColor
             ?: ContextCompat.getColor(requireContext(), R.color.buttonTextColor)
         @ColorInt val backgroundColor = customConfig?.chatPanel?.styling?.buttons?.backgroundColor
+            ?: ChatBackend.customConfig?.chatPanel?.styling?.buttons?.backgroundColor
             ?: config.chatPanel?.styling?.buttons?.backgroundColor
             ?: ContextCompat.getColor(requireContext(), R.color.buttonBackgroundColor)
 

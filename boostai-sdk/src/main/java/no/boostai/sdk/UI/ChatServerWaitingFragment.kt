@@ -86,14 +86,18 @@ open class ChatServerWaitingFragment (var customConfig: ChatConfig? = null) :
     fun updateStyling(config: ChatConfig) {
         @ColorInt val typingBackgroundColor =
             customConfig?.chatPanel?.styling?.chatBubbles?.typingBackgroundColor
+                ?: ChatBackend.customConfig?.chatPanel?.styling?.chatBubbles?.typingBackgroundColor
                 ?: config.chatPanel?.styling?.chatBubbles?.typingBackgroundColor
                 ?: customConfig?.chatPanel?.styling?.chatBubbles?.vaBackgroundColor
+                ?: ChatBackend.customConfig?.chatPanel?.styling?.chatBubbles?.vaBackgroundColor
                 ?: config.chatPanel?.styling?.chatBubbles?.vaBackgroundColor
                 ?: ContextCompat.getColor(requireContext(), R.color.vaBackgroundColor)
         @ColorInt val typingDotColor =
             customConfig?.chatPanel?.styling?.chatBubbles?.typingDotColor
+                ?: ChatBackend.customConfig?.chatPanel?.styling?.chatBubbles?.typingDotColor
                 ?: config.chatPanel?.styling?.chatBubbles?.typingDotColor
                 ?: customConfig?.chatPanel?.styling?.chatBubbles?.vaTextColor
+                ?: ChatBackend.customConfig?.chatPanel?.styling?.chatBubbles?.vaTextColor
                 ?: config.chatPanel?.styling?.chatBubbles?.vaTextColor
                 ?: ContextCompat.getColor(requireContext(), R.color.vaTextColor)
 

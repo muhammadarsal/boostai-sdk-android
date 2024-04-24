@@ -136,9 +136,11 @@ open class ChatViewSettingsFragment(
         if (config == null) return
 
         @ColorInt val primaryColor = customConfig?.chatPanel?.styling?.primaryColor
+            ?: ChatBackend.customConfig?.chatPanel?.styling?.primaryColor
             ?: config.chatPanel?.styling?.primaryColor
             ?: ContextCompat.getColor(requireContext(), R.color.primaryColor)
         @ColorInt val contrastColor = customConfig?.chatPanel?.styling?.contrastColor
+            ?: ChatBackend.customConfig?.chatPanel?.styling?.contrastColor
             ?: config.chatPanel?.styling?.contrastColor
             ?: ContextCompat.getColor(requireContext(), R.color.contrastColor)
 
@@ -158,6 +160,7 @@ open class ChatViewSettingsFragment(
 
     fun updateTranslatedMessages(config: ChatConfig?) {
         val customStrings = customConfig?.messages?.get(ChatBackend.languageCode)
+            ?: ChatBackend.customConfig?.messages?.get(ChatBackend.languageCode)
         val strings = config?.messages?.get(ChatBackend.languageCode)
         val fallbackStrings = ChatBackend.config?.messages?.get("en-US")
 

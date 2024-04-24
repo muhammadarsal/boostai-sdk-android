@@ -86,10 +86,12 @@ open class ChatHumanTypingFragment (var customConfig: ChatConfig? = null) :
     fun updateStyling(config: ChatConfig) {
         @ColorInt val backgroundColor =
             customConfig?.chatPanel?.styling?.chatBubbles?.vaBackgroundColor
+                ?: ChatBackend.customConfig?.chatPanel?.styling?.chatBubbles?.vaBackgroundColor
                 ?: config.chatPanel?.styling?.chatBubbles?.vaBackgroundColor
                 ?: ContextCompat.getColor(requireContext(), R.color.vaBackgroundColor)
         @ColorInt val textColor =
             customConfig?.chatPanel?.styling?.chatBubbles?.vaTextColor
+                ?: ChatBackend.customConfig?.chatPanel?.styling?.chatBubbles?.vaTextColor
                 ?: config.chatPanel?.styling?.chatBubbles?.vaTextColor
                 ?: ContextCompat.getColor(requireContext(), R.color.vaTextColor)
 

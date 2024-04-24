@@ -71,6 +71,7 @@ open class ChatMessageConsentFragment(
 
         if (animated) {
             val pace = customConfig?.chatPanel?.styling?.pace
+                ?: ChatBackend.customConfig?.chatPanel?.styling?.pace
                 ?: ChatBackend.config?.chatPanel?.styling?.pace
                 ?: ChatPanelDefaults.Styling.pace
             val staggerDelay = TimingHelper.calculateStaggerDelay(pace = pace, idx = 0)

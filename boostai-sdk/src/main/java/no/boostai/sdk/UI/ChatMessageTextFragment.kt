@@ -102,6 +102,7 @@ open class ChatMessageTextFragment(
 
                     val showLinkClickAsChatBubble =
                         customConfig?.chatPanel?.settings?.showLinkClickAsChatBubble
+                            ?: ChatBackend.customConfig?.chatPanel?.settings?.showLinkClickAsChatBubble
                             ?: ChatBackend.config?.chatPanel?.settings?.showLinkClickAsChatBubble
                             ?: ChatPanelDefaults.Settings.showLinkClickAsChatBubble
 
@@ -139,16 +140,20 @@ open class ChatMessageTextFragment(
 
         if (isClient) {
             backgroundColor = customConfig?.chatPanel?.styling?.chatBubbles?.userBackgroundColor
+                ?: ChatBackend.customConfig?.chatPanel?.styling?.chatBubbles?.userBackgroundColor
                 ?: config.chatPanel?.styling?.chatBubbles?.userBackgroundColor
                 ?: ContextCompat.getColor(requireContext(), R.color.userBackgroundColor)
             textColor = customConfig?.chatPanel?.styling?.chatBubbles?.userTextColor
+                ?: ChatBackend.customConfig?.chatPanel?.styling?.chatBubbles?.userTextColor
                 ?: config.chatPanel?.styling?.chatBubbles?.userTextColor
                 ?: ContextCompat.getColor(requireContext(), R.color.userTextColor)
         } else {
             backgroundColor = customConfig?.chatPanel?.styling?.chatBubbles?.vaBackgroundColor
+                ?: ChatBackend.customConfig?.chatPanel?.styling?.chatBubbles?.vaBackgroundColor
                 ?: config.chatPanel?.styling?.chatBubbles?.vaBackgroundColor
                 ?: ContextCompat.getColor(requireContext(), R.color.vaBackgroundColor)
             textColor = customConfig?.chatPanel?.styling?.chatBubbles?.vaTextColor
+                ?: ChatBackend.customConfig?.chatPanel?.styling?.chatBubbles?.vaTextColor
                 ?: config.chatPanel?.styling?.chatBubbles?.vaTextColor
                 ?: ContextCompat.getColor(requireContext(), R.color.vaTextColor)
         }

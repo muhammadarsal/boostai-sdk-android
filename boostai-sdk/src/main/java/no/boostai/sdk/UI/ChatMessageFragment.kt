@@ -130,12 +130,14 @@ open class ChatMessageFragment(
 
             fragments?.forEachIndexed { index, fragment ->
                 val pace = customConfig?.chatPanel?.styling?.pace
+                    ?: ChatBackend.customConfig?.chatPanel?.styling?.pace
                     ?: ChatBackend.config?.chatPanel?.styling?.pace
                     ?: ChatPanelDefaults.Styling.pace
                 val paceFactor = TimingHelper.calculatePace(pace)
                 val staggerDelay = TimingHelper.calculateStaggerDelay(pace, 1)
                 val timeUntilReveal = if (isClient) 0 else TimingHelper.calcTimeToRead(paceFactor)
                 val hideMessageFeedback = customConfig?.chatPanel?.styling?.messageFeedback?.hide
+                    ?: ChatBackend.customConfig?.chatPanel?.styling?.messageFeedback?.hide
                     ?: ChatBackend.config?.chatPanel?.styling?.messageFeedback?.hide
                     ?: ChatPanelDefaults.Styling.MessageFeedback.hide
 
@@ -187,6 +189,7 @@ open class ChatMessageFragment(
                 messagePartFragment.let { fragment ->
                     if (animated) {
                         val pace = customConfig?.chatPanel?.styling?.pace
+                            ?: ChatBackend.customConfig?.chatPanel?.styling?.pace
                             ?: ChatBackend.config?.chatPanel?.styling?.pace
                             ?: ChatPanelDefaults.Styling.pace
                         Timer().schedule(
@@ -270,6 +273,7 @@ open class ChatMessageFragment(
 
         if (!isClient) {
             val avatarShape = customConfig?.chatPanel?.styling?.avatarShape
+                ?: ChatBackend.customConfig?.chatPanel?.styling?.avatarShape
                 ?: config.chatPanel?.styling?.avatarShape
                 ?: ChatPanelDefaults.Styling.avatarShape
             imageView.background = if (avatarShape == AvatarShape.SQUARED) null else ContextCompat.getDrawable(requireContext(), R.drawable.rounded)

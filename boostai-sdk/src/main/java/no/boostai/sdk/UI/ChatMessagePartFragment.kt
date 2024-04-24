@@ -121,6 +121,7 @@ open class ChatMessagePartFragment(
                     element?.payload?.html?.let { getChatMessageTextFragment(it, true) }
                 ElementType.LINKS -> {
                     val buttonType = customConfig?.chatPanel?.styling?.buttons?.variant
+                        ?: ChatBackend.customConfig?.chatPanel?.styling?.buttons?.variant
                         ?: ChatBackend.config?.chatPanel?.styling?.buttons?.variant
                         ?: ChatPanelDefaults.Styling.Buttons.variant
                     if (buttonType == ButtonType.BULLET) {
@@ -208,9 +209,11 @@ open class ChatMessagePartFragment(
             val viewTreeObserver = view.viewTreeObserver
 
             val iconOutlineColor = customConfig?.chatPanel?.styling?.messageFeedback?.outlineColor
+                ?: ChatBackend.customConfig?.chatPanel?.styling?.messageFeedback?.outlineColor
                 ?: ChatBackend.config?.chatPanel?.styling?.messageFeedback?.outlineColor
                 ?: ContextCompat.getColor(requireContext(), R.color.messageFeedbackColor)
             val iconSelectedColor = customConfig?.chatPanel?.styling?.messageFeedback?.selectedColor
+                ?: ChatBackend.customConfig?.chatPanel?.styling?.messageFeedback?.selectedColor
                 ?: ChatBackend.config?.chatPanel?.styling?.messageFeedback?.selectedColor
                 ?: iconOutlineColor
 
@@ -298,6 +301,7 @@ open class ChatMessagePartFragment(
 
     fun updateStyling(config: ChatConfig? = null) {
         val outlineColor = customConfig?.chatPanel?.styling?.messageFeedback?.outlineColor
+            ?: ChatBackend.customConfig?.chatPanel?.styling?.messageFeedback?.outlineColor
             ?: config?.chatPanel?.styling?.messageFeedback?.outlineColor
             ?: ContextCompat.getColor(requireContext(), R.color.messageFeedbackColor)
 
