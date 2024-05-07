@@ -427,14 +427,14 @@ open class ChatViewFragment(
                 showWaitingForAgentResponseIndicator()
             else hideWaitingForAgentResponseIndicator()
             // Should we show the "Secure chat" badge?
-            val isSecure =
+            isSecureChat =
                 message.conversation?.state?.authenticatedUserId != null ||
                     (
                         isSecureChat && messageResponses.size > 0 &&
                             messageResponses[0].source == SourceType.CLIENT
                     )
 
-            secureChatWrapper.visibility = if (isSecure) View.VISIBLE else View.GONE
+            secureChatWrapper.visibility = if (isSecureChat) View.VISIBLE else View.GONE
         }
 
         hideStatusMessage()
