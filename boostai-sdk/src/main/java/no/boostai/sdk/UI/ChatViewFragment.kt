@@ -955,6 +955,7 @@ open class ChatViewFragment(
 
     override fun closeChat() {
         activity?.finish()
+        ChatBackend.stopPolling()
         BoostUIEvents.notifyObservers(BoostUIEvents.Event.chatPanelClosed)
     }
 
@@ -963,6 +964,7 @@ open class ChatViewFragment(
         val feedbackFragment = childFragmentManager.findFragmentByTag(feedbackFragmentId)
         if (feedbackFragment != null) {
             BoostUIEvents.notifyObservers(BoostUIEvents.Event.chatPanelClosed)
+            ChatBackend.stopPolling()
             activity?.finish();
             return;
         }
@@ -970,7 +972,7 @@ open class ChatViewFragment(
         // Should we request conversation feedback? Show feedback dialogue
         val hasClientMessages = ChatBackend.messages.filter { apiMessage ->
             val source = apiMessage.response?.source
-                ?: apiMessage.responses?.first()?.source
+                ?: apiMessage.responses?.firstOrNull()?.source
                 ?: SourceType.BOT
 
             source == SourceType.CLIENT
@@ -984,6 +986,7 @@ open class ChatViewFragment(
         else {
             // If all else fails, close the window
             activity?.finish()
+            ChatBackend.stopPolling()
             BoostUIEvents.notifyObservers(BoostUIEvents.Event.chatPanelClosed)
         }
     }
