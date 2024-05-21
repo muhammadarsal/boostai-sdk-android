@@ -241,7 +241,7 @@ open class ChatMessagePartFragment(
                         button.backgroundTintList = ColorStateList.valueOf(iconSelectedColor)
                         button.startAnimation(thumbOnAnimation)
 
-                        ChatBackend.feedback(responseId!!, FeedbackValue.REMOVE_POSITIVE)
+                        ChatBackend.feedback(responseId!!, FeedbackValue.POSITIVE)
                         BoostUIEvents.notifyObservers(BoostUIEvents.Event.positiveMessageFeedbackGiven)
                     }
                 }
