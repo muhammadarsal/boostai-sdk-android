@@ -335,7 +335,8 @@ object ChatBackend {
                             ),
                             type = ElementType.TEXT
                         )
-                    )
+                    ),
+                    isTempId = true
                 )
             )
             messages.add(apiMessage)

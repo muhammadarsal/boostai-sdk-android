@@ -157,7 +157,8 @@ data class Response (
     val error: String? = null,
     /// Change of van id
     @SerialName("van_id")
-    val vanId: Int? = null
+    val vanId: Int? = null,
+    val isTempId: Boolean = false
 ) : Parcelable
 
 @Serializable

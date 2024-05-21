@@ -375,6 +375,22 @@ open class ChatViewFragment(
     }
 
     fun handleReceivedMessage(message: APIMessage, animated: Boolean = true) {
+        // If we have a postedId, update the first message with a temporary ID
+        message.postedId?.let { postedId ->
+            val firstTemporaryId = responses.indexOfFirst { r -> r.isTempId }
+            firstTemporaryId.let { id ->
+                val m = responses[id]
+                val messageCopy = Response(
+                    id = postedId.toString(),
+                    source = m.source,
+                    language = m.language,
+                    elements = m.elements,
+                    dateCreated = m.dateCreated
+                )
+                responses[id] = messageCopy
+            }
+        }
+
         val messageResponses =
             message.responses?.let { ArrayList(message.responses) } ?: ArrayList()
 
@@ -393,7 +409,13 @@ open class ChatViewFragment(
         }
 
         messageResponses.forEachIndexed { index, response ->
-            // Add it to our response list
+            // Skip if the response is already present
+            if (responses.filter { r -> r.id == response.id }.any()) {
+                hideWaitingForAgentResponseIndicator()
+                return@forEachIndexed
+            }
+
+            // Add it to our response list if it's not already there
             responses.add(response)
             // Store the last avatar URL for later re-use
             lastAvatarURL = response.avatarUrl ?: lastAvatarURL
