@@ -483,6 +483,9 @@ data class Settings (
 
     /// Sets the user token generator for authenticated conversations
     val userToken: String? = null,
+
+    /// Should we skip displaying the welcome message?
+    val skipWelcomeMessage: Boolean? = null
 ) : Parcelable
 
 class ChatPanelDefaults {

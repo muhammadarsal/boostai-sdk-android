@@ -297,7 +297,8 @@ open class ChatViewFragment(
                     ?: ChatPanelDefaults.Settings.triggerActionOnResume
 
                 // Skip welcome message if userToken and startTriggerActionId is defined and triggerActionOnResume is true
-                val skipWelcomeMessage = ChatBackend.userToken != null && startTriggerActionId != null && triggerActionOnResume
+                val settingsSkipWelcomeMessage = customConfig?.chatPanel?.settings?.skipWelcomeMessage ?: ChatBackend.customConfig?.chatPanel?.settings?.skipWelcomeMessage ?: false
+                val skipWelcomeMessage = (ChatBackend.userToken != null && startTriggerActionId != null && triggerActionOnResume) || settingsSkipWelcomeMessage
 
                 val resumeCommand = CommandResume(conversationId)
                 resumeCommand.skipWelcomeMessage = skipWelcomeMessage
@@ -311,14 +312,7 @@ open class ChatViewFragment(
                                 ?: ChatBackend.customConfig?.chatPanel?.settings?.startNewConversationOnResumeFailure
                                 ?: ChatPanelDefaults.Settings.startNewConversationOnResumeFailure
                         if (startNewMessage) {
-                            ChatBackend.start(
-                                CommandStart(
-                                    language = customConfig?.chatPanel?.settings?.startLanguage ?: ChatBackend.customConfig?.chatPanel?.settings?.startLanguage,
-                                    contextIntentId = customConfig?.chatPanel?.settings?.contextTopicIntentId ?: ChatBackend.customConfig?.chatPanel?.settings?.contextTopicIntentId,
-                                    triggerAction = customConfig?.chatPanel?.settings?.startTriggerActionId ?: ChatBackend.customConfig?.chatPanel?.settings?.startTriggerActionId,
-                                    authTriggerAction = customConfig?.chatPanel?.settings?.authStartTriggerActionId ?: ChatBackend.customConfig?.chatPanel?.settings?.authStartTriggerActionId,
-                                )
-                            )
+                            startConversation()
                         }
                     }
 
@@ -332,18 +326,23 @@ open class ChatViewFragment(
                     }
                 })
             } else {
-                ChatBackend.start(
-                    CommandStart(
-                        language = customConfig?.chatPanel?.settings?.startLanguage ?: ChatBackend.customConfig?.chatPanel?.settings?.startLanguage,
-                        contextIntentId = customConfig?.chatPanel?.settings?.contextTopicIntentId ?: ChatBackend.customConfig?.chatPanel?.settings?.contextTopicIntentId,
-                        triggerAction = customConfig?.chatPanel?.settings?.startTriggerActionId ?: ChatBackend.customConfig?.chatPanel?.settings?.startTriggerActionId,
-                        authTriggerAction = customConfig?.chatPanel?.settings?.authStartTriggerActionId ?: ChatBackend.customConfig?.chatPanel?.settings?.authStartTriggerActionId,
-                    )
-                )
+                startConversation()
             }
         } else
             // Scroll to bottom after x ms
             Timer().schedule(200) { scrollToBottom() }
+    }
+
+    fun startConversation() {
+        ChatBackend.start(
+            CommandStart(
+                language = customConfig?.chatPanel?.settings?.startLanguage ?: ChatBackend.customConfig?.chatPanel?.settings?.startLanguage,
+                contextIntentId = customConfig?.chatPanel?.settings?.contextTopicIntentId ?: ChatBackend.customConfig?.chatPanel?.settings?.contextTopicIntentId,
+                triggerAction = customConfig?.chatPanel?.settings?.startTriggerActionId ?: ChatBackend.customConfig?.chatPanel?.settings?.startTriggerActionId,
+                authTriggerAction = customConfig?.chatPanel?.settings?.authStartTriggerActionId ?: ChatBackend.customConfig?.chatPanel?.settings?.authStartTriggerActionId,
+                skipWelcomeMessage = customConfig?.chatPanel?.settings?.skipWelcomeMessage ?: ChatBackend.customConfig?.chatPanel?.settings?.skipWelcomeMessage
+            )
+        )
     }
 
     fun setIsBlocked(isBlocked: Boolean) {
@@ -408,13 +407,9 @@ open class ChatViewFragment(
             }
         }
 
-        messageResponses.forEachIndexed { index, response ->
-            // Skip if the response is already present
-            if (responses.filter { r -> r.id == response.id }.any()) {
-                hideWaitingForAgentResponseIndicator()
-                return@forEachIndexed
-            }
+        hideWaitingForAgentResponseIndicator()
 
+        messageResponses.forEachIndexed { index, response ->
             // Add it to our response list if it's not already there
             responses.add(response)
             // Store the last avatar URL for later re-use
@@ -429,14 +424,16 @@ open class ChatViewFragment(
                     ?: ChatPanelDefaults.Settings.messageFeedbackOnFirstAction
             val isWelcomeMessage = messages.indexOf(message) <= firstNonBlockedMessageIndex
 
-            // Render the response
-            render(
-                response,
-                animated,
-                !messageFeedbackOnFirstAction && isWelcomeMessage,
-                message.conversation?.state?.awaitingFiles != null &&
-                    index == messageResponses.size - 1
-            )
+            if (response.elements.isNotEmpty()) {
+                // Render the response
+                render(
+                    response,
+                    animated,
+                    !messageFeedbackOnFirstAction && isWelcomeMessage,
+                    message.conversation?.state?.awaitingFiles != null &&
+                            index == messageResponses.size - 1
+                )
+            }
             // Are we waiting for an agent response? Show a "waiting view"
             val chatStatus =
                 ChatBackend.lastResponse?.conversation?.state?.chatStatus ?:

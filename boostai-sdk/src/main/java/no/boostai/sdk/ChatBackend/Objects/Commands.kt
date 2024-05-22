@@ -151,7 +151,8 @@ class CommandStart : ICommand {
         clean: Boolean? = null,
         clientTimezone: String? = null,
         customPayload: String? = null,
-        preferredClientLanguage: List<String>? = null
+        preferredClientLanguages: List<String>? = null,
+        skipWelcomeMessage: Boolean? = null
     ) {
         this.userToken = userToken
         this.language = language
@@ -163,7 +164,8 @@ class CommandStart : ICommand {
         this.clean = clean
         this.clientTimezone = clientTimezone
         this.customPayload = customPayload
-        this.preferredClientLanguage = preferredClientLanguage
+        this.preferredClientLanguages = preferredClientLanguages
+        this.skipWelcomeMessage = skipWelcomeMessage
     }
 
     @Required
@@ -206,13 +208,17 @@ class CommandStart : ICommand {
     @SerialName("client_timezone")
     var clientTimezone: String? = null
 
-    /// List of preferred client languages, in BCP47 format
-    @SerialName("preferred_client_language")
-    var preferredClientLanguage: List<String>? = null
-
     /// A string that is forwarded to External API's on each request
     @SerialName("custom_payload")
     var customPayload: String? = null
+
+    /// List of preferred client languages, in BCP47 format
+    @SerialName("preferred_client_languages")
+    var preferredClientLanguages: List<String>? = null
+
+    /// Should we skip displaying the welcome message?
+    @SerialName("skip_welcome_message")
+    var skipWelcomeMessage: Boolean? = null
 }
 
 /**
