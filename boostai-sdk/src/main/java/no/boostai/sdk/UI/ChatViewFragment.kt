@@ -23,6 +23,8 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.ColorStateList
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.text.*
 import android.text.style.ForegroundColorSpan
 import android.view.*
@@ -45,7 +47,6 @@ import no.boostai.sdk.R
 import no.boostai.sdk.UI.Events.BoostUIEvents
 import no.boostai.sdk.UI.Helpers.TimingHelper
 import java.util.*
-import kotlin.concurrent.schedule
 
 open class ChatViewFragment(
     var isDialog: Boolean = false,
@@ -330,7 +331,11 @@ open class ChatViewFragment(
             }
         } else
             // Scroll to bottom after x ms
-            Timer().schedule(200) { scrollToBottom() }
+            Handler(Looper.getMainLooper()).postDelayed({
+                if (context != null) {
+                    scrollToBottom()
+                }
+            }, 200)
     }
 
     fun startConversation() {
@@ -655,6 +660,8 @@ open class ChatViewFragment(
                     response.id
                 )
                 .commitAllowingStateLoss()
+
+            val handler = Handler(Looper.getMainLooper())
             if (animated) {
                 val pace = customConfig?.chatPanel?.styling?.pace
                     ?: ChatBackend.customConfig?.chatPanel?.styling?.pace
@@ -666,20 +673,26 @@ open class ChatViewFragment(
 
                 // Animate the scroll view to the bottom after each element display
                 response.elements.forEachIndexed { index, _ ->
-                    // Scroll to bottom after x ms
-                    Timer().schedule(timeUntilReveal * index + staggerDelay + 100) {
-                        scrollToBottom()
-                    }
+                    handler.postDelayed({
+                        if (context != null) {
+                            // Scroll to bottom after x ms
+                            scrollToBottom()
+                        }
+                    }, timeUntilReveal * index + staggerDelay + 100)
                 }
                 if (isAwaitingFiles)
-                    Timer().schedule(
-                        timeUntilReveal * response.elements.size + staggerDelay + 100
-                    ) {
-                        scrollToBottom()
-                    }
+                    handler.postDelayed({
+                        if (context != null) {
+                            scrollToBottom()
+                        }
+                    }, timeUntilReveal * response.elements.size + staggerDelay + 100)
             } else {
                 scrollToBottom()
-                Timer().schedule(100) { scrollToBottom(false) }
+                handler.postDelayed({
+                    if (context != null) {
+                        scrollToBottom(false)
+                    }
+                }, 150)
             }
         }
     }
@@ -703,9 +716,11 @@ open class ChatViewFragment(
             )
             .commitAllowingStateLoss()
 
-        Timer().schedule(200) {
-            scrollToBottom(true)
-        }
+        Handler(Looper.getMainLooper()).postDelayed({
+            if (context != null) {
+                scrollToBottom(true)
+            }
+        }, 200)
     }
 
     fun hideHumanTypingIndicator() {
@@ -727,9 +742,11 @@ open class ChatViewFragment(
             .commitAllowingStateLoss()
         waitingForAgentResponseFragmentTags.add(uuid)
 
-        Timer().schedule(200) {
-            scrollToBottom(true)
-        }
+        Handler(Looper.getMainLooper()).postDelayed({
+            if (context != null) {
+                scrollToBottom(true)
+            }
+        }, 200)
     }
 
     fun hideWaitingForAgentResponseIndicator() {
@@ -770,9 +787,11 @@ open class ChatViewFragment(
             )
             .commitAllowingStateLoss()
 
-        Timer().schedule(200) {
-            scrollToBottom(true)
-        }
+        Handler(Looper.getMainLooper()).postDelayed({
+            if (context != null) {
+                scrollToBottom(true)
+            }
+        }, 200)
     }
 
     fun hideStatusMessage() {
@@ -934,12 +953,14 @@ open class ChatViewFragment(
 
         if (settingsFragment != null) {
             settingsFragment.hide()
-            Timer().schedule(150) {
-                childFragmentManager
-                    .beginTransaction()
-                    .remove(settingsFragment)
-                    .commitAllowingStateLoss()
-            }
+            Handler(Looper.getMainLooper()).postDelayed({
+                if (context != null) {
+                    childFragmentManager
+                        .beginTransaction()
+                        .remove(settingsFragment)
+                        .commitAllowingStateLoss()
+                }
+            }, 150)
         }
 
         BoostUIEvents.notifyObservers(BoostUIEvents.Event.menuClosed)
@@ -963,12 +984,14 @@ open class ChatViewFragment(
 
         if (feedbackFragment != null) {
             feedbackFragment.hide()
-            Timer().schedule(150) {
-                childFragmentManager
-                    .beginTransaction()
-                    .remove(feedbackFragment)
-                    .commitAllowingStateLoss()
-            }
+            Handler(Looper.getMainLooper()).postDelayed({
+                if (context != null) {
+                    childFragmentManager
+                        .beginTransaction()
+                        .remove(feedbackFragment)
+                        .commitAllowingStateLoss()
+                }
+            }, 150)
         }
     }
 

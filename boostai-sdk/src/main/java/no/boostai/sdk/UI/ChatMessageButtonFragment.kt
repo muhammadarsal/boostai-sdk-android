@@ -22,9 +22,10 @@ package no.boostai.sdk.UI
 import android.app.Activity
 import android.content.Intent
 import android.content.res.ColorStateList
-import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.View
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
@@ -44,7 +45,6 @@ import no.boostai.sdk.UI.Helpers.TimingHelper
 import java.io.File
 import java.io.FileOutputStream
 import java.util.*
-import kotlin.concurrent.schedule
 
 open class ChatMessageButtonFragment(
     var link: Link? = null,
@@ -98,16 +98,22 @@ open class ChatMessageButtonFragment(
 
         textView.text = link?.text
         if (animated) {
-            Timer().schedule(staggerDelay) {
-                view.alpha = 1.0f
-                val fadeInAnimation =
-                    AnimationUtils.loadAnimation(context, R.anim.chat_message_animate_in)
-                view.animation = fadeInAnimation
-                fadeInAnimation.setAnimationListener(fragment)
-            }
-            Timer().schedule(staggerDelay + 300) {
-                view.alpha = 1.0f
-            }
+            val fadeInAnimation =
+                AnimationUtils.loadAnimation(context, R.anim.chat_message_animate_in)
+            val handler = Handler(Looper.getMainLooper())
+            handler.postDelayed({
+                if (context != null) {
+                    view.alpha = 1.0f
+                    view.animation = fadeInAnimation
+                    fadeInAnimation.setAnimationListener(fragment)
+                }
+            }, staggerDelay)
+
+            handler.postDelayed({
+                if (context != null) {
+                    view.alpha = 1.0f
+                }
+            }, staggerDelay + 300)
         }
         else view.alpha = 1.0F
 

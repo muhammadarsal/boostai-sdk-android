@@ -36,8 +36,6 @@ import no.boostai.sdk.ChatBackend.Objects.ChatPanelDefaults
 import no.boostai.sdk.ChatBackend.Objects.Response.*
 import no.boostai.sdk.R
 import no.boostai.sdk.UI.Helpers.TimingHelper
-import java.util.*
-import kotlin.concurrent.schedule
 
 open class ChatMessageFragment(
     var response: Response? = null,
@@ -142,21 +140,21 @@ open class ChatMessageFragment(
                     ?: ChatPanelDefaults.Styling.MessageFeedback.hide
 
                 if (animated)
-                    Timer().schedule(timeUntilReveal * index) {
-                        Handler(Looper.getMainLooper()).post {
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        if (context != null) {
                             addMessagePart(fragment, index)
-
-                            Timer().schedule(staggerDelay) {
-                                Handler(Looper.getMainLooper()).post {
-                                    // If we have more elements to show, display a waiting indicator before showing it
-                                    if (!isClient && index < fragments.size - 1)
-                                        addWaitingIndicator()
-                                    else if (!isClient && !isBlocked && !isWelcomeMessage && !hideMessageFeedback)
-                                        fragment.showFeedbackButtons()
-                                }
-                            }
                         }
-                    }
+
+                        Handler(Looper.getMainLooper()).postDelayed({
+                            if (context != null) {
+                                // If we have more elements to show, display a waiting indicator before showing it
+                                if (!isClient && index < fragments.size - 1)
+                                    addWaitingIndicator()
+                                else if (!isClient && !isBlocked && !isWelcomeMessage && !hideMessageFeedback)
+                                    fragment.showFeedbackButtons()
+                            }
+                        }, staggerDelay)
+                    }, timeUntilReveal * index)
                 else {
                     addMessagePart(fragment, index)
 
@@ -192,13 +190,11 @@ open class ChatMessageFragment(
                             ?: ChatBackend.customConfig?.chatPanel?.styling?.pace
                             ?: ChatBackend.config?.chatPanel?.styling?.pace
                             ?: ChatPanelDefaults.Styling.pace
-                        Timer().schedule(
-                            TimingHelper.timeUntilReveal(pace) * (fragments?.size ?: 0)
-                        ) {
-                            Handler(Looper.getMainLooper()).post {
+                        Handler(Looper.getMainLooper()).postDelayed({
+                            if (context != null) {
                                 addMessagePart(fragment, index)
                             }
-                        }
+                        }, TimingHelper.timeUntilReveal(pace) * (fragments?.size ?: 0))
                     } else {
                         addMessagePart(fragment, index)
                     }

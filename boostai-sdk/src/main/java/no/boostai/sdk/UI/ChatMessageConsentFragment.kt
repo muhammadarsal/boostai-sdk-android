@@ -21,6 +21,8 @@ package no.boostai.sdk.UI
 
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.View
 import android.view.animation.AnimationUtils
 import android.widget.Button
@@ -35,7 +37,6 @@ import no.boostai.sdk.R
 import no.boostai.sdk.UI.Events.BoostUIEvents
 import no.boostai.sdk.UI.Helpers.TimingHelper
 import java.util.*
-import kotlin.concurrent.schedule
 
 open class ChatMessageConsentFragment(
     var links: ArrayList<Link>? = null,
@@ -76,12 +77,14 @@ open class ChatMessageConsentFragment(
                 ?: ChatPanelDefaults.Styling.pace
             val staggerDelay = TimingHelper.calculateStaggerDelay(pace = pace, idx = 0)
 
-            Timer().schedule(staggerDelay) {
-                view.alpha = 1.0F
-                val fadeInAnimation =
-                    AnimationUtils.loadAnimation(context, R.anim.chat_message_animate_in)
-                view.animation = fadeInAnimation
-            }
+            val fadeInAnimation =
+                AnimationUtils.loadAnimation(context, R.anim.chat_message_animate_in)
+            Handler(Looper.getMainLooper()).postDelayed({
+                if (context != null) {
+                    view.alpha = 1.0F
+                    view.animation = fadeInAnimation
+                }
+            }, staggerDelay)
         } else view.alpha = 1.0F
         approveButton.setTextColor(
             ContextCompat.getColor(requireContext(), R.color.consentApproveButtonTextColor)
