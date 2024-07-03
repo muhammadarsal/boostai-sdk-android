@@ -412,9 +412,13 @@ open class ChatViewFragment(
             }
         }
 
-        hideWaitingForAgentResponseIndicator()
-
         messageResponses.forEachIndexed { index, response ->
+            // Skip if the response is already present
+            if (responses.find { it.id == response.id } != null) {
+                hideWaitingForAgentResponseIndicator()
+                return@forEachIndexed
+            }
+
             // Add it to our response list if it's not already there
             responses.add(response)
             // Store the last avatar URL for later re-use
