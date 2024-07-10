@@ -35,6 +35,7 @@ import java.io.IOException
 import java.lang.ref.WeakReference
 import java.net.URL
 import java.util.*
+import java.util.concurrent.TimeUnit
 import kotlin.collections.ArrayList
 import kotlin.concurrent.scheduleAtFixedRate
 import kotlin.math.min
@@ -47,18 +48,19 @@ object ChatBackend {
     }
 
     /// HTTP client
-    private var client: OkHttpClient = OkHttpClient()
+    private var client: OkHttpClient = getOkHttpClientBuilder().build()
 
     /// Enable or disable certificate pinning
     var isCertificatePinningEnabled = false
         set(enabled) {
             field = enabled
+            val builder = getOkHttpClientBuilder()
             if (enabled) {
-                client = OkHttpClient.Builder()
+                client = builder
                     .certificatePinner(BoostCertificatePinner.getCertificatePinner())
                     .build()
             } else {
-                client = OkHttpClient()
+                client = builder.build()
             }
         }
 
@@ -114,6 +116,14 @@ object ChatBackend {
 
     // Override default config (that usually comes from boost.ai server)
     var customConfig: ChatConfig? = null
+
+    fun getOkHttpClientBuilder(): OkHttpClient.Builder {
+        return OkHttpClient.Builder()
+            .connectTimeout(60, TimeUnit.SECONDS)
+            .writeTimeout(60, TimeUnit.SECONDS)
+            .readTimeout(60, TimeUnit.SECONDS)
+            .callTimeout(60, TimeUnit.SECONDS)
+    }
 
     fun getChatUrl(): URL {
         return URL("https://" + domain + "/api/chat/v2")

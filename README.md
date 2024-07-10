@@ -45,7 +45,7 @@ Add the boost.ai SDK library as a dependency in your app `build.gradle` file:
 
 ```kotlin
 dependencies { 
-  implementation 'com.github.BoostAI:mobile-sdk-android:1.1.25'
+  implementation 'com.github.BoostAI:mobile-sdk-android:1.1.26'
 }
 ```
 
@@ -68,7 +68,7 @@ Add the dependency:
 <dependency>
     <groupId>com.github.BoostAI</groupId>
     <artifactId>mobile-sdk-android</artifactId>
-    <version>1.1.25</version>
+    <version>1.1.26</version>
 </dependency>
 ```
 
