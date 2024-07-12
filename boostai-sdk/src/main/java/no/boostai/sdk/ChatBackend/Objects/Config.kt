@@ -21,6 +21,7 @@ package no.boostai.sdk.ChatBackend.Objects
 import android.graphics.Color
 import android.os.Parcelable
 import androidx.annotation.ColorInt
+import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -30,6 +31,7 @@ import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.JsonElement
 
 // Handle hex color serialization
 @Serializer(forClass = Int::class)
@@ -447,7 +449,8 @@ data class Settings (
     val conversationId: String? = null,
 
     /// Custom payload to send for each request
-    val customPayload: String? = null,
+    @IgnoredOnParcel
+    val customPayload: JsonElement? = null,
 
     /// The endpoint to upload files
     val fileUploadServiceEndpointUrl: String? = null,

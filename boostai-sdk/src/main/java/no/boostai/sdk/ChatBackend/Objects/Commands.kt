@@ -150,7 +150,7 @@ class CommandStart : ICommand {
         skill: String? = null,
         clean: Boolean? = null,
         clientTimezone: String? = null,
-        customPayload: String? = null,
+        customPayload: JsonElement? = null,
         preferredClientLanguages: List<String>? = null,
         skipWelcomeMessage: Boolean? = null
     ) {
@@ -210,7 +210,7 @@ class CommandStart : ICommand {
 
     /// A string that is forwarded to External API's on each request
     @SerialName("custom_payload")
-    var customPayload: String? = null
+    var customPayload: JsonElement? = null
 
     /// List of preferred client languages, in BCP47 format
     @SerialName("preferred_client_languages")
@@ -237,7 +237,7 @@ class CommandPost : IConversation {
         contextIntentId: Int? = null,
         skill: String? = null,
         id: String? = null,
-        customPayload: String? = null,
+        customPayload: JsonElement? = null,
         clientTimezone: String? = null
     ) {
         this.conversationId = if (userToken == null) conversationId else null
@@ -280,7 +280,7 @@ class CommandPost : IConversation {
 
     /// An string that is forwarded to External API's on each request
     @SerialName("custom_payload")
-    var customPayload: String? = null
+    var customPayload: JsonElement? = null
 
     /// Forwarded to the API Connector and External API's. This parameter can tell an API which timezone the client is currently in.
     /// The format is listed [here](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones).

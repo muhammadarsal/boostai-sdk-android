@@ -597,6 +597,10 @@ open class ChatViewFragment(
         if (ChatBackend.filterValues == null && filterValues != null) {
             ChatBackend.filterValues = filterValues
         }
+
+        if (ChatBackend.customPayload == null) {
+            ChatBackend.customPayload = customConfig?.chatPanel?.settings?.customPayload
+        }
     }
 
     fun updateTranslatedMessages(config: ChatConfig?) {

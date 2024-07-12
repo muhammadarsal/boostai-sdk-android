@@ -76,7 +76,7 @@ object ChatBackend {
     var reference: String = ""
 
     /// An string that is forwarded to External API's on each request
-    var customPayload: String? = null
+    var customPayload: JsonElement? = null
 
     /// The endpoint to upload files
     var fileUploadServiceEndpointUrl: String? = null

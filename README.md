@@ -45,7 +45,7 @@ Add the boost.ai SDK library as a dependency in your app `build.gradle` file:
 
 ```kotlin
 dependencies { 
-  implementation 'com.github.BoostAI:mobile-sdk-android:1.1.26'
+  implementation 'com.github.BoostAI:mobile-sdk-android:1.1.27'
 }
 ```
 
@@ -68,7 +68,7 @@ Add the dependency:
 <dependency>
     <groupId>com.github.BoostAI</groupId>
     <artifactId>mobile-sdk-android</artifactId>
-    <version>1.1.26</version>
+    <version>1.1.27</version>
 </dependency>
 ```
 
@@ -194,13 +194,12 @@ ChatConfig(
             authStartTriggerActionId: Int?
             contextTopicIntentId: Int?
             conversationId: String?
-            customPayload: String?
+            customPayload: JsonElement?
             fileUploadServiceEndpointUrl: String?
             messageFeedbackOnFirstAction: Boolean?
             rememberConversation: Boolean?
             requestFeedback: Boolean?
             showLinkClickAsChatBubble: Boolean?
-            customPayload: String?
             skill: String?
             startLanguage: String?
             startNewConversationOnResumeFailure: Boolean?
