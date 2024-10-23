@@ -22,11 +22,15 @@ package no.boostai.sdk.UI
 import android.os.Bundle
 import android.view.View
 import android.widget.TextView
+import androidx.annotation.FontRes
 import androidx.core.content.ContextCompat
+import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.Fragment
+import no.boostai.sdk.ChatBackend.ChatBackend
+import no.boostai.sdk.ChatBackend.Objects.ChatConfig
 import no.boostai.sdk.R
 
-open class StatusMessageFragment(var message: String? = null, var isError: Boolean = false)
+open class StatusMessageFragment(var message: String? = null, var isError: Boolean = false, var customConfig: ChatConfig? = null)
     : Fragment(R.layout.status_message) {
 
     val messageKey = "message"
@@ -58,5 +62,16 @@ open class StatusMessageFragment(var message: String? = null, var isError: Boole
         textView.setTextColor(ContextCompat.getColor(requireContext(), textColor))
         textView.textAlignment = TextView.TEXT_ALIGNMENT_CENTER
         textView.text = message
+
+        @FontRes val bodyFont = customConfig?.chatPanel?.styling?.fonts?.bodyFont
+            ?: ChatBackend.customConfig?.chatPanel?.styling?.fonts?.bodyFont
+            ?: ChatBackend.config?.chatPanel?.styling?.fonts?.bodyFont
+
+        bodyFont?.let {
+            try {
+                val typeface = ResourcesCompat.getFont(requireContext().applicationContext, it)
+                textView.typeface = typeface
+            } catch (e: java.lang.Exception) {}
+        }
     }
 }

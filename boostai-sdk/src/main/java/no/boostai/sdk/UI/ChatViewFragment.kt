@@ -31,7 +31,9 @@ import android.view.*
 import android.view.inputmethod.InputMethodManager
 import android.widget.*
 import androidx.annotation.ColorInt
+import androidx.annotation.FontRes
 import androidx.core.content.ContextCompat
+import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.fragment.app.Fragment
 import no.boostai.sdk.ChatBackend.ChatBackend
@@ -123,6 +125,23 @@ open class ChatViewFragment(
 
         ChatBackend.addConfigObserver(this)
         ChatBackend.addMessageObserver(this)
+    }
+
+    override fun onPause() {
+        super.onPause()
+
+        ChatBackend.stopPolling();
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        val chatStatus =
+            ChatBackend.lastResponse?.conversation?.state?.chatStatus ?:
+            ChatStatus.VIRTUAL_AGENT
+        if (chatStatus == ChatStatus.IN_HUMAN_CHAT_QUEUE || chatStatus == ChatStatus.ASSIGNED_TO_HUMAN) {
+            ChatBackend.startPolling()
+        }
     }
 
     override fun onDestroy() {
@@ -254,7 +273,9 @@ open class ChatViewFragment(
 
         // Set up listener
         ChatBackend.onReady(object : ChatBackend.ConfigReadyListener {
-            override fun onFailure(exception: Exception) {}
+            override fun onFailure(exception: Exception) {
+                showStatusMessage(exception.localizedMessage ?: "An unknown error occured", true)
+            }
 
             override fun onReady(config: ChatConfig) {
                 setBackendProperties(config)
@@ -576,6 +597,27 @@ open class ChatViewFragment(
         panelBackgroundColor?.let {
             chatMessagesLayout.setBackgroundColor(panelBackgroundColor)
             scrollView.setBackgroundColor(panelBackgroundColor)
+        }
+
+        @FontRes val bodyFont = customConfig?.chatPanel?.styling?.fonts?.bodyFont
+            ?: ChatBackend.customConfig?.chatPanel?.styling?.fonts?.bodyFont
+            ?: ChatBackend.config?.chatPanel?.styling?.fonts?.bodyFont
+        @FontRes val footnoteFont = customConfig?.chatPanel?.styling?.fonts?.footnoteFont
+            ?: ChatBackend.customConfig?.chatPanel?.styling?.fonts?.footnoteFont
+            ?: ChatBackend.config?.chatPanel?.styling?.fonts?.footnoteFont
+
+        bodyFont?.let {
+            try {
+                val typeface = ResourcesCompat.getFont(requireContext().applicationContext, it)
+                editText.typeface = typeface
+            } catch (e: java.lang.Exception) {}
+        }
+
+        footnoteFont?.let {
+            try {
+                val typeface = ResourcesCompat.getFont(requireContext().applicationContext, it)
+                characterCountTextView.typeface = typeface
+            } catch (e: java.lang.Exception) {}
         }
     }
 
@@ -1085,7 +1127,7 @@ open class ChatViewFragment(
     )
 
     fun getStatusMessageFragment(message: String, isError: Boolean): Fragment =
-        StatusMessageFragment(message, isError)
+        StatusMessageFragment(message, isError, customConfig)
 
     fun getChatViewFeedbackFragment(): Fragment =
         ChatViewFeedbackFragment(this, isDialog, customConfig)

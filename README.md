@@ -6,6 +6,9 @@
 * [Frontend/UI](#frontendui)
     * [ChatBackend](#chatbackend)
     * [Config](#config)
+        * [Config overview](#config-overview)
+        * [Fonts](#fonts)
+        * [Colors](#colors)
     * [Display the chat](#display-the-chat)
         * [Floating avatar](#floating-avatar)
         * [Docked chat view (in a tab bar)](#docked-chat-view-in-a-tab-bar)
@@ -45,7 +48,7 @@ Add the boost.ai SDK library as a dependency in your app `build.gradle` file:
 
 ```kotlin
 dependencies { 
-  implementation 'com.github.BoostAI:mobile-sdk-android:1.1.27'
+  implementation 'com.github.BoostAI:mobile-sdk-android:1.1.28'
 }
 ```
 
@@ -68,7 +71,7 @@ Add the dependency:
 <dependency>
     <groupId>com.github.BoostAI</groupId>
     <artifactId>mobile-sdk-android</artifactId>
-    <version>1.1.27</version>
+    <version>1.1.28</version>
 </dependency>
 ```
 
@@ -205,6 +208,40 @@ ChatConfig(
             startNewConversationOnResumeFailure: Boolean?
             startTriggerActionId: Int?
             userToken: String?
+        )
+    )
+)
+```
+
+#### Fonts
+
+The UI by default uses the system standard font. Pass a custom font to customize the font:
+
+```kotlin
+/// Font used for body text (must be an R.font reference id)
+@FontRes val bodyFont: Int? = null
+
+/// Font used for headlines (must be an R.font reference id)
+@FontRes val headlineFont: Int? = null
+
+/// Font used for footnote sized strings (status messages, character count text etc. – must be an R.font reference id)
+@FontRes val footnoteFont: Int? = null
+
+/// Font used for menu titles (must be an R.font reference id)
+@FontRes val menuItemFont: Int? = null
+```
+
+Please note that these are not a part of the JavaScript specification.
+
+Set them on a custom chat config:
+
+```kotlin
+val customConfig = ChatConfig(
+    chatPanel = ChatPanel(
+        styling = Styling(
+            fonts = Fonts(
+                bodyFont = R.font.my_font, // set your custom font resource here
+            )
         )
     )
 )
@@ -442,7 +479,7 @@ class MyFragment : Fragment, BoostUIEvents.Observer {
 
 The `ChatBackend` class is the main entry point for everything backend/API related. As a minimum, it needs a domain to point to:
 
-```swift
+```kotlin
 ChatBackend.domain = "your-name.boost.ai" // Your boost.ai server domain name
 ```
 

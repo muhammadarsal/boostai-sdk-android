@@ -12,13 +12,21 @@ import android.view.View
 import android.view.animation.AnimationUtils
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.annotation.FontRes
+import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.Fragment
 import com.bumptech.glide.Glide
+import no.boostai.sdk.ChatBackend.ChatBackend
+import no.boostai.sdk.ChatBackend.Objects.ChatConfig
 import no.boostai.sdk.ChatBackend.Objects.Response.GenericCard
 import no.boostai.sdk.R
 import no.boostai.sdk.UI.Events.BoostUIEvents
 
-open class ChatMessageGenericJSONFragment(var card: GenericCard? = null, val animated: Boolean = true) :
+open class ChatMessageGenericJSONFragment(
+    var card: GenericCard? = null,
+    val animated: Boolean = true,
+    var customConfig: ChatConfig? = null
+) :
     Fragment(R.layout.chat_server_message_generic_json_fragment) {
 
     lateinit var imageView: ImageView
@@ -80,4 +88,27 @@ open class ChatMessageGenericJSONFragment(var card: GenericCard? = null, val ani
         linkTextView.visibility = if (linkTextView.text.isNullOrEmpty()) View.GONE else View.VISIBLE
     }
 
+    fun updateStyling() {
+        @FontRes val bodyFont = customConfig?.chatPanel?.styling?.fonts?.bodyFont
+            ?: ChatBackend.customConfig?.chatPanel?.styling?.fonts?.bodyFont
+            ?: ChatBackend.config?.chatPanel?.styling?.fonts?.bodyFont
+        @FontRes val headlineFont = customConfig?.chatPanel?.styling?.fonts?.headlineFont
+            ?: ChatBackend.customConfig?.chatPanel?.styling?.fonts?.headlineFont
+            ?: ChatBackend.config?.chatPanel?.styling?.fonts?.headlineFont
+
+        bodyFont?.let {
+            try {
+                val typeface = ResourcesCompat.getFont(requireContext().applicationContext, it)
+                textTextView.typeface = typeface
+                linkTextView.typeface = typeface
+            } catch (e: java.lang.Exception) {}
+        }
+
+        headlineFont?.let {
+            try {
+                val typeface = ResourcesCompat.getFont(requireContext().applicationContext, it)
+                headingTextView.typeface = typeface
+            } catch (e: java.lang.Exception) {}
+        }
+    }
 }

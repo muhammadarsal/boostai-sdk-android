@@ -21,7 +21,6 @@ package no.boostai.sdk.UI
 
 import android.content.Intent
 import android.content.res.ColorStateList
-import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.os.Bundle
 import android.text.Html
@@ -29,7 +28,9 @@ import android.view.View
 import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.annotation.ColorInt
+import androidx.annotation.FontRes
 import androidx.core.content.ContextCompat
+import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.Fragment
 import no.boostai.sdk.ChatBackend.ChatBackend
 import no.boostai.sdk.ChatBackend.Objects.ChatConfig
@@ -156,6 +157,18 @@ open class ChatMessageTextFragment(
                 ?: ChatBackend.customConfig?.chatPanel?.styling?.chatBubbles?.vaTextColor
                 ?: config.chatPanel?.styling?.chatBubbles?.vaTextColor
                 ?: ContextCompat.getColor(requireContext(), R.color.vaTextColor)
+        }
+
+        @FontRes val bodyFontResource = customConfig?.chatPanel?.styling?.fonts?.bodyFont
+            ?: ChatBackend.customConfig?.chatPanel?.styling?.fonts?.bodyFont
+            ?: ChatBackend.config?.chatPanel?.styling?.fonts?.bodyFont
+        bodyFontResource?.let {
+            try {
+                val typeface = ResourcesCompat.getFont(requireContext().applicationContext, it)
+                textView.typeface = typeface
+            } catch (e: java.lang.Exception) {
+                print("error")
+            }
         }
 
         textView.setTextColor(textColor)

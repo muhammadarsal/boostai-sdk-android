@@ -33,6 +33,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.annotation.ColorInt
 import androidx.core.content.ContextCompat
+import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.Fragment
 import no.boostai.sdk.ChatBackend.ChatBackend
 import no.boostai.sdk.ChatBackend.Objects.ChatConfig
@@ -256,6 +257,21 @@ open class ChatViewFeedbackFragment(
             ?: config.chatPanel?.styling?.contrastColor
             ?: ContextCompat.getColor(requireContext(), R.color.contrastColor)
         val messages = config.messages?.get(ChatBackend.languageCode)
+
+        val bodyFont = customConfig?.chatPanel?.styling?.fonts?.bodyFont
+            ?: ChatBackend.customConfig?.chatPanel?.styling?.fonts?.bodyFont
+            ?: ChatBackend.config?.chatPanel?.styling?.fonts?.bodyFont
+        bodyFont?.let {
+            try {
+                val typeface = ResourcesCompat.getFont(requireContext().applicationContext, it)
+                feedbackTextView.typeface = typeface
+                feedbackEditText.typeface = typeface
+                feedbackResponseTextView.typeface = typeface
+                backButton.typeface = typeface
+            } catch (e: java.lang.Exception) {
+                print("error")
+            }
+        }
 
         view?.background = ColorDrawable(primaryColor)
         feedbackTextView.setTextColor(contrastColor)

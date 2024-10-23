@@ -31,7 +31,9 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.annotation.ColorInt
+import androidx.annotation.FontRes
 import androidx.core.content.ContextCompat
+import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.Fragment
 import no.boostai.sdk.ChatBackend.ChatBackend
 import no.boostai.sdk.ChatBackend.Objects.ChatConfig
@@ -156,6 +158,42 @@ open class ChatViewSettingsFragment(
         poweredByImageView.imageTintList = ColorStateList.valueOf(contrastColor)
 
         updateTranslatedMessages(config)
+
+        @FontRes val bodyFont = customConfig?.chatPanel?.styling?.fonts?.bodyFont
+            ?: ChatBackend.customConfig?.chatPanel?.styling?.fonts?.bodyFont
+            ?: ChatBackend.config?.chatPanel?.styling?.fonts?.bodyFont
+        @FontRes val menuItemFont = customConfig?.chatPanel?.styling?.fonts?.menuItemFont
+            ?: ChatBackend.customConfig?.chatPanel?.styling?.fonts?.menuItemFont
+            ?: ChatBackend.config?.chatPanel?.styling?.fonts?.menuItemFont
+
+        bodyFont?.let {
+            try {
+                val typeface = ResourcesCompat.getFont(requireContext().applicationContext, it)
+                backButton.typeface = typeface
+            } catch (e: java.lang.Exception) {}
+        }
+
+        menuItemFont?.let {
+            try {
+                val typeface = ResourcesCompat.getFont(requireContext().applicationContext, it)
+                feedbackButton.typeface = typeface
+                downloadButton.typeface = typeface
+                deleteButton.typeface = typeface
+                privacyPolicyTextView.typeface = typeface
+
+            } catch (e: java.lang.Exception) {}
+        }
+
+        @FontRes val footnoteFont = customConfig?.chatPanel?.styling?.fonts?.footnoteFont
+            ?: ChatBackend.customConfig?.chatPanel?.styling?.fonts?.footnoteFont
+            ?: ChatBackend.config?.chatPanel?.styling?.fonts?.footnoteFont
+
+        footnoteFont?.let {
+            try {
+                val typeface = ResourcesCompat.getFont(requireContext().applicationContext, it)
+                poweredByTextView.typeface = typeface
+            } catch (e: java.lang.Exception) {}
+        }
     }
 
     fun updateTranslatedMessages(config: ChatConfig?) {

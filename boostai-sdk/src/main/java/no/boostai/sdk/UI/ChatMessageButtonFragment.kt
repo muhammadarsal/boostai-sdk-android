@@ -32,7 +32,9 @@ import android.view.animation.AnimationUtils
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.annotation.ColorInt
+import androidx.annotation.FontRes
 import androidx.core.content.ContextCompat
+import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.Fragment
 import no.boostai.sdk.ChatBackend.ChatBackend
 import no.boostai.sdk.ChatBackend.Objects.ChatConfig
@@ -224,6 +226,17 @@ open class ChatMessageButtonFragment(
         imageView.setImageResource(linkDrawable)
         imageView.imageTintList = ColorStateList.valueOf(textColor)
         view?.background?.setTint(backgroundColor)
+
+        @FontRes val bodyFont = customConfig?.chatPanel?.styling?.fonts?.bodyFont
+            ?: ChatBackend.customConfig?.chatPanel?.styling?.fonts?.bodyFont
+            ?: ChatBackend.config?.chatPanel?.styling?.fonts?.bodyFont
+
+        bodyFont?.let {
+            try {
+                val typeface = ResourcesCompat.getFont(requireContext().applicationContext, it)
+                textView.typeface = typeface
+            } catch (e: java.lang.Exception) {}
+        }
     }
 
     override fun onConfigReceived(backend: ChatBackend, config: ChatConfig) = updateStyling(config)

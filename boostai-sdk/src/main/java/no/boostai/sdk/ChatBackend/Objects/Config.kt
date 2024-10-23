@@ -21,6 +21,7 @@ package no.boostai.sdk.ChatBackend.Objects
 import android.graphics.Color
 import android.os.Parcelable
 import androidx.annotation.ColorInt
+import androidx.annotation.FontRes
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.SerialName
@@ -238,6 +239,22 @@ enum class ButtonType {
 
 @Serializable
 @Parcelize
+data class Fonts (
+    /// Font used for body text (must be an R.font reference id)
+    @FontRes val bodyFont: Int? = null,
+
+    /// Font used for headlines (must be an R.font reference id)
+    @FontRes val headlineFont: Int? = null,
+
+    /// Font used for footnote sized strings (status messages, character count text etc. – must be an R.font reference id)
+    @FontRes val footnoteFont: Int? = null,
+
+    /// Font used for menu titles (must be an R.font reference id)
+    @FontRes val menuItemFont: Int? = null
+) : Parcelable
+
+@Serializable
+@Parcelize
 data class Header (
     val filters: Filters? = null,
 
@@ -307,7 +324,10 @@ data class Styling (
     val composer: Composer? = null,
 
     /// See `MessageFeedback` definition
-    val messageFeedback: MessageFeedback? = null
+    val messageFeedback: MessageFeedback? = null,
+
+    /// See `Fonts` definition
+    val fonts: Fonts? = null
 ) : Parcelable
 
 @Serializable

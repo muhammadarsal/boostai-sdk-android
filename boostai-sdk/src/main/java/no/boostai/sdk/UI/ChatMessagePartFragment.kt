@@ -323,7 +323,7 @@ open class ChatMessagePartFragment(
         ChatMessageVideoFragment(source, url)
 
     fun getGenericJSONFragment(card: GenericCard): Fragment =
-        ChatMessageGenericJSONFragment(card, animated)
+        ChatMessageGenericJSONFragment(card, animated, customConfig)
 
     override fun onConfigReceived(backend: ChatBackend, config: ChatConfig) {
         updateStyling(config)

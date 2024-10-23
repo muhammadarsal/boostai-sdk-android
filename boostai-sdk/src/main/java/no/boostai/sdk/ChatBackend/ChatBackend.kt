@@ -277,7 +277,7 @@ object ChatBackend {
 
         if (lastTyped != null) {
             val now = Date()
-            if (Math.abs(now.time - lastTyped!!.time) < 5) {
+            if (Math.abs(now.time - lastTyped!!.time) < 5000) {
                 return
             }
         }
