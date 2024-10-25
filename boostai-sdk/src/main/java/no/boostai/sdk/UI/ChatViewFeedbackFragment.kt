@@ -256,7 +256,13 @@ open class ChatViewFeedbackFragment(
             ?: ChatBackend.customConfig?.chatPanel?.styling?.contrastColor
             ?: config.chatPanel?.styling?.contrastColor
             ?: ContextCompat.getColor(requireContext(), R.color.contrastColor)
-        val messages = config.messages?.get(ChatBackend.languageCode)
+
+        val closeWindowMessage = customConfig?.messages?.get(ChatBackend.languageCode)?.closeWindow
+            ?: ChatBackend.customConfig?.messages?.get(ChatBackend.languageCode)?.closeWindow
+            ?: ChatBackend.config?.messages?.get(ChatBackend.languageCode)?.closeWindow
+        val backMessage = customConfig?.messages?.get(ChatBackend.languageCode)?.back
+            ?: ChatBackend.customConfig?.messages?.get(ChatBackend.languageCode)?.back
+            ?: ChatBackend.config?.messages?.get(ChatBackend.languageCode)?.back
 
         val bodyFont = customConfig?.chatPanel?.styling?.fonts?.bodyFont
             ?: ChatBackend.customConfig?.chatPanel?.styling?.fonts?.bodyFont
@@ -281,8 +287,8 @@ open class ChatViewFeedbackFragment(
         backButton.setTextColor(primaryColor)
         (backButton.background as? GradientDrawable)?.setColor(contrastColor)
         submitButton.imageTintList = ColorStateList.valueOf(contrastColor)
-        if (isDialog) backButton.text = messages?.closeWindow ?: getString(R.string.close)
-        else backButton.text = messages?.back ?: getString(R.string.back)
+        if (isDialog) backButton.text = closeWindowMessage ?: getString(R.string.close)
+        else backButton.text = backMessage ?: getString(R.string.back)
 
         updateTranslatedMessages(config)
     }

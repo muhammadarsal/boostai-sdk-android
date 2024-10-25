@@ -28,6 +28,7 @@ import android.view.View
 import android.view.ViewTreeObserver
 import android.view.animation.AnimationUtils
 import android.widget.FrameLayout
+import android.widget.ImageButton
 import android.widget.LinearLayout
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
@@ -61,8 +62,8 @@ open class ChatMessagePartFragment(
     val isWelcomeMessageKey = "isWelcomeMessage"
     val customConfigKey = "customConfig"
 
-    var positiveMessageFeedbackButton: View? = null
-    var negativeMessageFeedbackButton: View? = null
+    var positiveMessageFeedbackButton: ImageButton? = null
+    var negativeMessageFeedbackButton: ImageButton? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -169,6 +170,7 @@ open class ChatMessagePartFragment(
             View.GONE
 
         updateStyling()
+        updateTranslatedMessages()
         ChatBackend.addConfigObserver(this)
     }
 
@@ -299,15 +301,31 @@ open class ChatMessagePartFragment(
         }
     }
 
-    fun updateStyling(config: ChatConfig? = null) {
+    fun updateStyling() {
         val outlineColor = customConfig?.chatPanel?.styling?.messageFeedback?.outlineColor
             ?: ChatBackend.customConfig?.chatPanel?.styling?.messageFeedback?.outlineColor
-            ?: config?.chatPanel?.styling?.messageFeedback?.outlineColor
+            ?: ChatBackend.config?.chatPanel?.styling?.messageFeedback?.outlineColor
             ?: ContextCompat.getColor(requireContext(), R.color.messageFeedbackColor)
 
         val color = ColorStateList.valueOf(outlineColor)
         positiveMessageFeedbackButton?.backgroundTintList = color
         negativeMessageFeedbackButton?.backgroundTintList = color
+    }
+
+    fun updateTranslatedMessages() {
+        val messageThumbsUp = customConfig?.messages?.get(ChatBackend.languageCode)?.messageThumbsUp
+            ?: ChatBackend.customConfig?.messages?.get(ChatBackend.languageCode)?.messageThumbsUp
+            ?: ChatBackend.config?.messages?.get(ChatBackend.languageCode)?.messageThumbsUp
+        messageThumbsUp?.let {
+            positiveMessageFeedbackButton?.contentDescription = it
+        }
+
+        val messageThumbsDown = customConfig?.messages?.get(ChatBackend.languageCode)?.messageThumbsDown
+            ?: ChatBackend.customConfig?.messages?.get(ChatBackend.languageCode)?.messageThumbsUp
+            ?: ChatBackend.config?.messages?.get(ChatBackend.languageCode)?.messageThumbsUp
+        messageThumbsDown?.let {
+            negativeMessageFeedbackButton?.contentDescription = it
+        }
     }
 
     fun getChatMessageTextFragment(text: String, isHtml: Boolean): Fragment =
@@ -326,7 +344,8 @@ open class ChatMessagePartFragment(
         ChatMessageGenericJSONFragment(card, animated, customConfig)
 
     override fun onConfigReceived(backend: ChatBackend, config: ChatConfig) {
-        updateStyling(config)
+        updateStyling()
+        updateTranslatedMessages()
     }
 
     override fun onFailure(backend: ChatBackend, error: Exception) {

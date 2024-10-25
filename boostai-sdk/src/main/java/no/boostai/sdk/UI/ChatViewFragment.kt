@@ -77,6 +77,7 @@ open class ChatViewFragment(
     val feedbackFragmentId = "feedback"
     lateinit var chatContent: FrameLayout
     lateinit var secureChatWrapper: LinearLayout
+    lateinit var secureChatTextView: TextView
     lateinit var editText: EditText
     lateinit var submitButton: ImageButton
     lateinit var characterCountTextView: TextView
@@ -170,6 +171,7 @@ open class ChatViewFragment(
 
         chatContent = view.findViewById(R.id.chat_content)
         secureChatWrapper = view.findViewById(R.id.secure_chat_wrapper)
+        secureChatTextView = view.findViewById(R.id.secure_chat_textview)
         editText = view.findViewById(R.id.chat_input_editText)
         submitButton = view.findViewById(R.id.chat_input_submit_button)
         characterCountTextView = view.findViewById(R.id.chat_input_character_count_textview)
@@ -487,7 +489,7 @@ open class ChatViewFragment(
         }
 
         hideStatusMessage()
-        updateTranslatedMessages(ChatBackend.config)
+        updateTranslatedMessages()
 
         // Show human typing indicator if applicable
         if (message.conversation?.state?.humanIsTyping == true) {
@@ -536,7 +538,7 @@ open class ChatViewFragment(
     }
 
     fun updateStyling(config: ChatConfig? = null) {
-        updateTranslatedMessages(config)
+        updateTranslatedMessages()
         updateSubmitButtonState()
 
         val hide = customConfig?.chatPanel?.styling?.composer?.hide
@@ -645,9 +647,29 @@ open class ChatViewFragment(
         }
     }
 
-    fun updateTranslatedMessages(config: ChatConfig?) {
-        config?.messages?.get(ChatBackend.languageCode)?.composePlaceholder?.let {
+    fun updateTranslatedMessages() {
+        val composePlaceHolder = customConfig?.messages?.get(ChatBackend.languageCode)?.composePlaceholder
+            ?: ChatBackend.customConfig?.messages?.get(ChatBackend.languageCode)?.composePlaceholder
+            ?: ChatBackend.config?.messages?.get(ChatBackend.languageCode)?.composePlaceholder
+
+        val submitMessage = customConfig?.messages?.get(ChatBackend.languageCode)?.submitMessage
+            ?: ChatBackend.customConfig?.messages?.get(ChatBackend.languageCode)?.submitMessage
+            ?: ChatBackend.config?.messages?.get(ChatBackend.languageCode)?.submitMessage
+
+        val loggedIn = customConfig?.messages?.get(ChatBackend.languageCode)?.loggedIn
+            ?: ChatBackend.customConfig?.messages?.get(ChatBackend.languageCode)?.loggedIn
+            ?: ChatBackend.config?.messages?.get(ChatBackend.languageCode)?.loggedIn
+
+        composePlaceHolder?.let {
             editText.hint = it
+        }
+
+        submitMessage?.let {
+            submitButton.contentDescription = it
+        }
+
+        loggedIn?.let {
+            secureChatTextView.text = it
         }
     }
 

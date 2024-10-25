@@ -20,6 +20,8 @@
     <string name="thumbs_up">Thumbs up</string>
     <string name="thumbs_down">Thumbs down</string>
     <string name="upload_file">Upload file</string>
+    <string name="satistifed_with_answer">Satisfied with answer</string>
+    <string name="not_satistifed_with_answer">Not satisfied with answer</string>
     <string name="submit">Submit</string>
     <string name="secure_chat">Secure chat</string>
     <string name="external_link">External link</string>

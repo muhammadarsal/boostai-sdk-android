@@ -19,6 +19,8 @@
     <string name="privacy_policy">Personvernerklæring</string>
     <string name="thumbs_up">Tommel opp</string>
     <string name="thumbs_down">Tommel ned</string>
+    <string name="satistifed_with_answer">Fornøyd med svaret</string>
+    <string name="not_satistifed_with_answer">Ikke fornøyd med svaret</string>
     <string name="upload_file">Last opp fil</string>
     <string name="submit">Send</string>
     <string name="secure_chat">Sikker chat</string>

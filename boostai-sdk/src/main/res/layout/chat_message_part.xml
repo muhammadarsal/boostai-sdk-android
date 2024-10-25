@@ -22,16 +22,18 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content">
 
-        <View
+        <ImageButton
             android:background="@drawable/ic_thumbs_down"
             android:id="@+id/chat_message_feedback_negative"
+            android:contentDescription="@string/not_satistifed_with_answer"
             android:layout_marginTop="6dp"
             android:layout_width="16dp"
             android:layout_height="16dp" />
 
-        <View
+        <ImageButton
             android:background="@drawable/ic_thumbs_up"
             android:id="@+id/chat_message_feedback_positive"
+            android:contentDescription="@string/satistifed_with_answer"
             android:layout_marginStart="8dp"
             android:layout_marginTop="2dp"
             android:layout_width="16dp"
