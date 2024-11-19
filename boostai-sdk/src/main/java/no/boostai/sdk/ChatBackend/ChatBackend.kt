@@ -476,6 +476,7 @@ object ChatBackend {
             is CommandStart -> {
                 message.filterValues = filterValues
             }
+            else -> {}
         }
 
         // Remove class discriminator key (it makes the server backend throw a 400 error)

@@ -887,7 +887,7 @@ open class ChatViewFragment(
             ?: ChatBackend.customConfig?.chatPanel?.header?.filters?.options
             ?: ChatBackend.config?.chatPanel?.header?.filters?.options
         val initialFilter = options?.first()
-        val hasSelectedFilterValues = selectedFilterValues?.isNotEmpty()
+        val hasSelectedFilterValues = selectedFilterValues.isNotEmpty()
 
         var currentFilter: no.boostai.sdk.ChatBackend.Objects.Filter? = null
         if (options != null && selectedFilterValues != null) {

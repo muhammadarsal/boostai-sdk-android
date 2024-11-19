@@ -159,6 +159,7 @@ open class ChatMessagePartFragment(
                     }
                 }
                 ElementType.UNKNOWN -> {} // TODO
+                else -> {}
             }
             fragment?.let {
                 childFragmentManager.beginTransaction().add(R.id.chat_message_part, it)
