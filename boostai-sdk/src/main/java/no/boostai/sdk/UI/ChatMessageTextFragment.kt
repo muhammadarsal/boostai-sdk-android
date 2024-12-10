@@ -24,6 +24,7 @@ import android.content.res.ColorStateList
 import android.net.Uri
 import android.os.Bundle
 import android.text.Html
+import android.util.Patterns
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.TextView
@@ -91,6 +92,20 @@ open class ChatMessageTextFragment(
         }
 
         if (isHtml) {
+            // Find links in plain text (especially relevant in text from human chat)
+            val matcher = text?.let { Patterns.WEB_URL.matcher(it) }
+            while (matcher?.find() == true) {
+                val url = matcher.group()
+                val index = text?.indexOf(url) ?: -1
+                // Check that the URL is not already a link
+                if (index >= 6 && text!!.substring(index - 6, index) != "href=\"") {
+                    text = text?.replaceFirst(
+                        url,
+                        "<a href=\"" + url + "\">" + url + "</a>"
+                    )
+                }
+            }
+
             val content: CharSequence = Html.fromHtml(text, Html.FROM_HTML_MODE_LEGACY)
 
             textView.text = trimTrailingWhitespace(content)
