@@ -75,7 +75,9 @@ data class Files (
 data class File (
     val filename: String,
     val mimeType: String,
-    val url: String
+    val url: String,
+    var isUploading: Boolean = false,
+    var hasUploadError: Boolean = false
 )
 
 /**
@@ -237,6 +239,7 @@ class CommandPost : IConversation {
         contextIntentId: Int? = null,
         skill: String? = null,
         id: String? = null,
+        message: String? = null,
         customPayload: JsonElement? = null,
         clientTimezone: String? = null
     ) {
@@ -248,6 +251,7 @@ class CommandPost : IConversation {
         this.contextIntentId = contextIntentId
         this.skill = skill
         this.id = id
+        this.message = message
         this.customPayload = customPayload
         this.clientTimezone = clientTimezone
     }
@@ -277,6 +281,9 @@ class CommandPost : IConversation {
 
     /// The id of a button or a bot question
     var id: String? = null
+
+    // A message string to go along with a file upload
+    var message: String? = null
 
     /// An string that is forwarded to External API's on each request
     @SerialName("custom_payload")

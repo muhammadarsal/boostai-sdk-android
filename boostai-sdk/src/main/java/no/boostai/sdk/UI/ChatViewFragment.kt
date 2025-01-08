@@ -20,16 +20,32 @@
 package no.boostai.sdk.UI
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import android.content.res.ColorStateList
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.text.*
+import android.provider.OpenableColumns
+import android.text.Editable
+import android.text.InputFilter
+import android.text.InputType
+import android.text.SpannableString
+import android.text.TextWatcher
 import android.text.style.ForegroundColorSpan
-import android.view.*
+import android.view.KeyEvent
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
+import android.view.View
 import android.view.inputmethod.InputMethodManager
-import android.widget.*
+import android.widget.EditText
+import android.widget.FrameLayout
+import android.widget.ImageButton
+import android.widget.LinearLayout
+import android.widget.ScrollView
+import android.widget.TextView
 import androidx.annotation.ColorInt
 import androidx.annotation.FontRes
 import androidx.core.content.ContextCompat
@@ -41,6 +57,8 @@ import no.boostai.sdk.ChatBackend.Objects.ChatConfig
 import no.boostai.sdk.ChatBackend.Objects.ChatPanelDefaults
 import no.boostai.sdk.ChatBackend.Objects.CommandResume
 import no.boostai.sdk.ChatBackend.Objects.CommandStart
+import no.boostai.sdk.ChatBackend.Objects.File
+import no.boostai.sdk.ChatBackend.Objects.FileUpload
 import no.boostai.sdk.ChatBackend.Objects.Response.APIMessage
 import no.boostai.sdk.ChatBackend.Objects.Response.ChatStatus
 import no.boostai.sdk.ChatBackend.Objects.Response.Response
@@ -48,7 +66,8 @@ import no.boostai.sdk.ChatBackend.Objects.Response.SourceType
 import no.boostai.sdk.R
 import no.boostai.sdk.UI.Events.BoostUIEvents
 import no.boostai.sdk.UI.Helpers.TimingHelper
-import java.util.*
+import java.io.FileOutputStream
+import java.util.UUID
 
 open class ChatViewFragment(
     var isDialog: Boolean = false,
@@ -58,7 +77,9 @@ open class ChatViewFragment(
     Fragment(R.layout.chat_view),
     ChatBackend.MessageObserver,
     ChatBackend.ConfigObserver,
-    ChatViewSettingsDelegate {
+    ChatViewSettingsDelegate, FileUploadFragment.FileUploadFragmentDelegate {
+
+    private val FILE_PICKER_REQUEST = 847321
 
     val conversationIdKey = "conversationId"
     val isDialogKey = "isDialog"
@@ -89,6 +110,9 @@ open class ChatViewFragment(
     lateinit var chatMessagesLayout: LinearLayout
     lateinit var chatInputOutline: FrameLayout
     lateinit var chatInputBorder: FrameLayout
+    lateinit var fileUploadButton: ImageButton
+    lateinit var fileUploadsWrapper: LinearLayout
+
     var lastAvatarURL: String? = null
     var maxCharacterCount = 110
     var messages: ArrayList<APIMessage> = ArrayList()
@@ -99,6 +123,8 @@ open class ChatViewFragment(
     var isSecureChat = false
     var conversationReference: String? = null
     var conversationId: String? = null
+    var pendingFileUploads: ArrayList<File> = ArrayList()
+    var pendingFileUploadFragments: ArrayList<FileUploadFragment> = ArrayList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -183,6 +209,8 @@ open class ChatViewFragment(
         chatInputOutline = view.findViewById(R.id.chat_input_outline)
         chatInputBorder = view.findViewById(R.id.chat_input_border)
         chatInputInner = view.findViewById(R.id.chat_input_inner)
+        fileUploadButton = view.findViewById(R.id.upload_files_button)
+        fileUploadsWrapper = view.findViewById(R.id.file_uploads_wrapper)
 
         chatInputInner.background.setTint(
             ContextCompat.getColor(requireContext(), android.R.color.white)
@@ -207,10 +235,8 @@ open class ChatViewFragment(
             override fun onKey(v: View?, keyCode: Int, event: KeyEvent?): Boolean {
                 if (event?.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_ENTER) {
                     val text = editText.text.toString().trim()
-                    if (text.isNotEmpty()) {
-                        submitText(text)
-                        return true
-                    }
+                    submitText(text)
+                    return true
                 }
 
                 return false
@@ -266,8 +292,17 @@ open class ChatViewFragment(
         }
         submitButton.setOnClickListener {
             val text = editText.text.toString().trim()
+            submitText(text)
+        }
+        fileUploadButton.setOnClickListener {
+            if (isBlocked || pendingFileUploads.isNotEmpty()) {
+                return@setOnClickListener
+            }
 
-            if (text.isNotEmpty()) submitText(text)
+            Intent(Intent.ACTION_GET_CONTENT).let { intent ->
+                intent.setType("*/*")
+                startActivityForResult(intent, FILE_PICKER_REQUEST);
+            }
         }
 
         // Set up menu
@@ -435,6 +470,9 @@ open class ChatViewFragment(
             }
         }
 
+        val allowHumanChatFileUpload = message.conversation?.state?.allowHumanChatFileUpload == true && ChatBackend.lastResponse?.conversation?.state?.poll == true && ChatBackend.fileUploadServiceEndpointUrl != null
+        fileUploadButton.visibility = if (allowHumanChatFileUpload) View.VISIBLE else View.GONE
+
         messageResponses.forEachIndexed { index, response ->
             // Skip if the response is already present
             if (responses.find { it.id == response.id } != null) {
@@ -529,7 +567,21 @@ open class ChatViewFragment(
     }
 
     fun submitText(text: String) {
-        ChatBackend.message(text)
+        val uploadedFiles = pendingFileUploads.filter { !it.isUploading && !it.hasUploadError }
+        val hasCompletedFileUploads = pendingFileUploads.size > 0 && pendingFileUploads.size == uploadedFiles.size
+        val hasUploadingFiles = pendingFileUploads.any { it.isUploading }
+
+        if (hasUploadingFiles || (text.isEmpty() && !hasCompletedFileUploads)) return
+
+        if (hasCompletedFileUploads) {
+            ChatBackend.sendFiles(uploadedFiles, text)
+        } else {
+            ChatBackend.message(text)
+        }
+
+        pendingFileUploads = ArrayList()
+        renderFileUploads()
+
         BoostUIEvents.notifyObservers(BoostUIEvents.Event.messageSent)
 
         // Update view state
@@ -599,6 +651,21 @@ open class ChatViewFragment(
         panelBackgroundColor?.let {
             chatMessagesLayout.setBackgroundColor(panelBackgroundColor)
             scrollView.setBackgroundColor(panelBackgroundColor)
+        }
+
+        val fileUploadButtonColor = customConfig?.chatPanel?.styling?.composer?.fileUploadButtonColor
+            ?: ChatBackend.customConfig?.chatPanel?.styling?.composer?.fileUploadButtonColor
+            ?: config?.chatPanel?.styling?.composer?.fileUploadButtonColor
+        fileUploadButtonColor?.let {
+            val states = arrayOf(
+                intArrayOf(android.R.attr.state_enabled), // enabled
+                intArrayOf(-android.R.attr.state_enabled), // disabled
+            )
+            val colors = intArrayOf(
+                fileUploadButtonColor,
+                R.color.gray,
+            )
+            fileUploadButton.imageTintList = ColorStateList(states, colors)
         }
 
         @FontRes val bodyFont = customConfig?.chatPanel?.styling?.fonts?.bodyFont
@@ -700,7 +767,12 @@ open class ChatViewFragment(
             ?: ChatBackend.customConfig?.chatPanel?.styling?.composer?.sendButtonDisabledColor
             ?: ChatBackend.config?.chatPanel?.styling?.composer?.sendButtonDisabledColor
             ?: ContextCompat.getColor(requireContext(), R.color.gray)
-        val isEnabled = currentText.trim().isNotEmpty() && !isBlocked
+
+        val uploadedFiles = pendingFileUploads.filter { !it.isUploading && !it.hasUploadError }
+        val hasCompletedFileUploads = pendingFileUploads.size > 0 && pendingFileUploads.size == uploadedFiles.size
+        val hasUploadingFiles = pendingFileUploads.any { it.isUploading }
+
+        val isEnabled = (currentText.trim().isNotEmpty() || hasCompletedFileUploads) && !isBlocked && !hasUploadingFiles
 
         submitButton.isEnabled = isEnabled
         submitButton.backgroundTintList = ColorStateList.valueOf(
@@ -774,6 +846,38 @@ open class ChatViewFragment(
             if (smoothScroll) scrollView.smoothScrollTo(0, chatMessagesLayout.bottom)
             else scrollView.scrollTo(0, chatMessagesLayout.bottom)
         }
+
+    fun renderFileUploads() {
+        // Remove existing file upload fragments
+        val transaction = childFragmentManager.beginTransaction()
+        for (fragment in pendingFileUploadFragments) {
+            transaction.remove(fragment)
+        }
+        transaction.commitAllowingStateLoss()
+        pendingFileUploadFragments = ArrayList()
+
+        for (file in pendingFileUploads) {
+            val fragment = FileUploadFragment(file)
+            pendingFileUploadFragments.add(fragment)
+            childFragmentManager.beginTransaction()
+                .add(
+                    R.id.file_uploads_wrapper,
+                    fragment,
+                    file.url
+                )
+                .commitAllowingStateLoss()
+
+            fragment.delegate = this
+        }
+
+        updateSubmitButtonState()
+        fileUploadButton.isEnabled = !isBlocked && pendingFileUploads.isEmpty()
+    }
+
+    override fun removeFileUpload(fragment: FileUploadFragment, file: File) {
+        pendingFileUploads.remove(file)
+        renderFileUploads()
+    }
 
     fun showHumanTypingIndicator() {
         if (childFragmentManager.findFragmentByTag("humanTyping") != null)
@@ -1157,4 +1261,58 @@ open class ChatViewFragment(
     fun getChatViewSettingsFragment(): Fragment =
         ChatViewSettingsFragment(this, isDialog, customConfig)
 
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        if (requestCode == FILE_PICKER_REQUEST && resultCode == Activity.RESULT_OK) {
+            data?.data?.let { uri ->
+                val contentResolver = requireContext().contentResolver
+
+                val mimeType: String = contentResolver.getType(uri) ?: "application/octet-stream"
+                var name = "file.unknown"
+
+                val cursor = contentResolver.query(uri, null, null, null, null)
+                cursor?.let {
+                    /*
+                     * Get the column indexes of the data in the Cursor,
+                     * move to the first row in the Cursor, get the data,
+                     * and display it.
+                     */
+                    val nameIndex = it.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                    cursor.moveToFirst()
+                    name = cursor.getString(nameIndex)
+                }
+                cursor?.close()
+
+                val fileInputStream = requireContext().contentResolver.openInputStream(uri)
+                val outFile =
+                    java.io.File.createTempFile(name, "", requireContext().cacheDir)
+                val outputStream = FileOutputStream(outFile)
+                fileInputStream?.copyTo(outputStream)
+
+                val fileExpirationSeconds = customConfig?.chatPanel?.settings?.fileExpirationSeconds
+                    ?: ChatBackend.customConfig?.chatPanel?.settings?.fileExpirationSeconds
+                    ?: ChatBackend.config?.chatPanel?.settings?.fileExpirationSeconds
+
+                val pendingFile = File(name, mimeType, "", true)
+                pendingFileUploads.add(pendingFile)
+                renderFileUploads()
+
+                val fileUpload = FileUpload(outFile, name, mimeType)
+                ChatBackend.uploadFilesToAPI(listOf(fileUpload), fileExpirationSeconds, object : ChatBackend.APIFileUploadResponseListener {
+                    override fun onFailure(exception: Exception) {
+                        pendingFileUploads.remove(pendingFile)
+                        pendingFileUploads.add(File(name, mimeType, "", false, true))
+                        renderFileUploads()
+                    }
+                    override fun onResponse(files: List<File>) {
+                        pendingFileUploads.remove(pendingFile)
+                        pendingFileUploads.addAll(files)
+                        renderFileUploads()
+                    }
+                })
+                return
+            }
+        }
+
+        super.onActivityResult(requestCode, resultCode, data)
+    }
 }

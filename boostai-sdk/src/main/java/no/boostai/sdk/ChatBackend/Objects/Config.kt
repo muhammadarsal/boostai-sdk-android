@@ -76,6 +76,7 @@ class ConfigV2 (
     var requestConversationFeedback: Boolean? = false,
     var rememberConversation: Boolean? = false,
     var fileUploadServiceEndpointUrl: String? = null,
+    var fileExpirationSeconds: Int? = null,
     var filters: List<Filter>? = null,
     var pace: ConversationPace? = null,
     var messages: Map<String, Messages>? = null
@@ -416,6 +417,9 @@ data class Composer (
     /// Disabled color of the number of characters typed
     //@ColorInt val composeLengthDisabledColor: Int? = null,
 
+    /// Color of the file upload button
+    @ColorInt val fileUploadButtonColor: Int? = null,
+
     /// Background color of the frame around the composer. The “frame” is everything below the
     /// topBorder  – the container around the text area (gray by default).
     @ColorInt val frameBackgroundColor: Int? = null,
@@ -474,6 +478,9 @@ data class Settings (
 
     /// The endpoint to upload files
     val fileUploadServiceEndpointUrl: String? = null,
+
+    // Expiry time for file uploads
+    val fileExpirationSeconds: Int? = null,
 
     /// Enable or disable thumbs up or down in the welcome message. Default false.
     val messageFeedbackOnFirstAction: Boolean? = null,
@@ -586,6 +593,7 @@ fun convertConfig(configV2: ConfigV2): ConfigV3 {
             ),
             settings = Settings(
                 fileUploadServiceEndpointUrl = configV2.fileUploadServiceEndpointUrl,
+                fileExpirationSeconds = configV2.fileExpirationSeconds,
                 requestFeedback = configV2.requestConversationFeedback,
                 rememberConversation = configV2.rememberConversation
             )

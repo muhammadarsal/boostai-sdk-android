@@ -26,6 +26,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.provider.OpenableColumns
 import android.view.View
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
@@ -39,14 +40,14 @@ import androidx.fragment.app.Fragment
 import no.boostai.sdk.ChatBackend.ChatBackend
 import no.boostai.sdk.ChatBackend.Objects.ChatConfig
 import no.boostai.sdk.ChatBackend.Objects.ChatPanelDefaults
+import no.boostai.sdk.ChatBackend.Objects.File
+import no.boostai.sdk.ChatBackend.Objects.FileUpload
 import no.boostai.sdk.ChatBackend.Objects.Response.Link
 import no.boostai.sdk.ChatBackend.Objects.Response.LinkType
 import no.boostai.sdk.R
 import no.boostai.sdk.UI.Events.BoostUIEvents
 import no.boostai.sdk.UI.Helpers.TimingHelper
-import java.io.File
 import java.io.FileOutputStream
-import java.util.*
 
 open class ChatMessageButtonFragment(
     var link: Link? = null,
@@ -167,7 +168,7 @@ open class ChatMessageButtonFragment(
             val textColor = customConfig?.chatPanel?.styling?.buttons?.textColor
                 ?: ChatBackend.customConfig?.chatPanel?.styling?.buttons?.textColor
                 ?: ChatBackend.config?.chatPanel?.styling?.buttons?.textColor
-                ?: ContextCompat.getColor(requireContext(), android.R.color.black)
+                ?: ContextCompat.getColor(requireContext(), android.R.color.white)
             val focusTextColor = customConfig?.chatPanel?.styling?.buttons?.focusTextColor
                 ?: ChatBackend.customConfig?.chatPanel?.styling?.buttons?.focusTextColor
                 ?: ChatBackend.config?.chatPanel?.styling?.buttons?.focusTextColor
@@ -184,18 +185,44 @@ open class ChatMessageButtonFragment(
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        if (requestCode == FILE_PICKER_REQUEST && resultCode == Activity.RESULT_OK)
-            data?.data?.let {
-                val fileInputStream = requireActivity().contentResolver.openInputStream(it)
-                val outFile =
-                    File.createTempFile("test", ".svg", requireActivity().cacheDir)
-                val outputStream = FileOutputStream(outFile)
-                val files = Arrays.asList(outFile)
+        if (requestCode == FILE_PICKER_REQUEST && resultCode == Activity.RESULT_OK) {
+            data?.data?.let { uri ->
+                val contentResolver = requireContext().contentResolver
 
+                val mimeType: String = contentResolver.getType(uri) ?: "application/octet-stream"
+                var name = "file.unknown"
+
+                val cursor = contentResolver.query(uri, null, null, null, null)
+                cursor?.let {
+                    /*
+                     * Get the column indexes of the data in the Cursor,
+                     * move to the first row in the Cursor, get the data,
+                     * and display it.
+                     */
+                    val nameIndex = it.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                    cursor.moveToFirst()
+                    name = cursor.getString(nameIndex)
+                }
+                cursor?.close()
+
+                val fileInputStream = requireContext().contentResolver.openInputStream(uri)
+                val outFile =
+                    java.io.File.createTempFile(name, ".unknown", requireContext().cacheDir)
+                val outputStream = FileOutputStream(outFile)
                 fileInputStream?.copyTo(outputStream)
-                ChatBackend.uploadFilesToAPI(files)
+
+                val fileUpload = FileUpload(outFile, name, mimeType)
+                ChatBackend.uploadFilesToAPI(listOf(fileUpload), null, object : ChatBackend.APIFileUploadResponseListener {
+                    override fun onFailure(exception: Exception) {}
+                    override fun onResponse(files: List<File>) {
+                        ChatBackend.sendFiles(files)
+                    }
+                })
+                return
             }
-        else super.onActivityResult(requestCode, resultCode, data)
+        }
+
+        super.onActivityResult(requestCode, resultCode, data)
     }
 
     override fun onDestroy() {
@@ -219,8 +246,12 @@ open class ChatMessageButtonFragment(
         val linkDrawable: Int
 
         if (link?.id == ACTION_LINK_UPLOAD) linkDrawable = R.drawable.ic_upload_files
-        else if (link?.type == LinkType.EXTERNAL_LINK)
-            linkDrawable = R.drawable.ic_external_link_icon
+        else if (link?.type == LinkType.EXTERNAL_LINK) {
+            if (link?.isAttachment == true)
+                linkDrawable = R.drawable.ic_file
+            else
+                linkDrawable = R.drawable.ic_external_link_icon
+        }
         else linkDrawable = R.drawable.ic_arrow_right
         textView.setTextColor(textColor)
         imageView.setImageResource(linkDrawable)

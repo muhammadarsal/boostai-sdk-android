@@ -3,7 +3,9 @@
     <color name="textColor">#000000</color>
     <color name="white">#FFFFFF</color>
     <color name="gray">#CCCCCC</color>
-    <color name="lightGray">#F6F6F6</color>
+    <color name="mediumGray">#E0E0E0</color>
+    <color name="lightGray">#F2F2F2</color>
+    <color name="lighterGray">#F6F6F6</color>
     <color name="purple">#582C58</color>
     <color name="consentApproveButtonBackgroundColor">#d0ecd6</color>
     <color name="consentApproveButtonTextColor">#005000</color>

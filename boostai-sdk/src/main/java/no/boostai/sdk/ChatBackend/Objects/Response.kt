@@ -272,7 +272,10 @@ data class ConversationState (
     /// If true, the DELETE command is operational
     @SerialName("allow_delete_conversation")
     val allowDeleteConversation: Boolean? = null,
-    /// Wheter the conversation is in Human Chat state. The client should POLL the server for more data. The SDK will handle this automatically.
+    /// Should we allow file upload in human chat?
+    @SerialName("allow_human_chat_file_upload")
+    val allowHumanChatFileUpload: Boolean? = null,
+    /// Wether the conversation is in Human Chat state. The client should POLL the server for more data. The SDK will handle this automatically.
     val poll: Boolean? = null,
     /// true if human is typing in Human Chat
     @SerialName("human_is_typing")
@@ -296,6 +299,8 @@ data class Link (
     val function: FunctionType? = null,
     val question: String? = null,
     val url: String? = null,
+    @SerialName("is_attachment")
+    val isAttachment: Boolean? = null,
     @SerialName("van_base_url")
     val vanBaseUrl: String? = null,
     @SerialName("van_name")

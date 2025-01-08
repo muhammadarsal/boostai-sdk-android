@@ -23,20 +23,66 @@ import android.os.Handler
 import android.os.Looper
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.json.*
-import no.boostai.sdk.ChatBackend.Objects.*
-import no.boostai.sdk.ChatBackend.Objects.Response.*
-import okhttp3.*
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.decodeFromJsonElement
+import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.jsonObject
+import no.boostai.sdk.ChatBackend.Objects.ChatConfig
+import no.boostai.sdk.ChatBackend.Objects.ClientTyping
+import no.boostai.sdk.ChatBackend.Objects.CommandConfig
+import no.boostai.sdk.ChatBackend.Objects.CommandDelete
+import no.boostai.sdk.ChatBackend.Objects.CommandDownload
+import no.boostai.sdk.ChatBackend.Objects.CommandFeedback
+import no.boostai.sdk.ChatBackend.Objects.CommandFeedbackValue
+import no.boostai.sdk.ChatBackend.Objects.CommandHumanChatPost
+import no.boostai.sdk.ChatBackend.Objects.CommandLoginEvent
+import no.boostai.sdk.ChatBackend.Objects.CommandPoll
+import no.boostai.sdk.ChatBackend.Objects.CommandPollStop
+import no.boostai.sdk.ChatBackend.Objects.CommandPost
+import no.boostai.sdk.ChatBackend.Objects.CommandResume
+import no.boostai.sdk.ChatBackend.Objects.CommandSmartReply
+import no.boostai.sdk.ChatBackend.Objects.CommandStart
+import no.boostai.sdk.ChatBackend.Objects.CommandStop
+import no.boostai.sdk.ChatBackend.Objects.CommandTyping
+import no.boostai.sdk.ChatBackend.Objects.ConfigV2
+import no.boostai.sdk.ChatBackend.Objects.EmitEvent
+import no.boostai.sdk.ChatBackend.Objects.FeedbackValue
+import no.boostai.sdk.ChatBackend.Objects.File
+import no.boostai.sdk.ChatBackend.Objects.FileUpload
+import no.boostai.sdk.ChatBackend.Objects.Files
+import no.boostai.sdk.ChatBackend.Objects.ICommand
+import no.boostai.sdk.ChatBackend.Objects.Response.APIMessage
+import no.boostai.sdk.ChatBackend.Objects.Response.ChatStatus
+import no.boostai.sdk.ChatBackend.Objects.Response.Element
+import no.boostai.sdk.ChatBackend.Objects.Response.ElementType
+import no.boostai.sdk.ChatBackend.Objects.Response.Link
+import no.boostai.sdk.ChatBackend.Objects.Response.LinkType
+import no.boostai.sdk.ChatBackend.Objects.Response.Payload
+import no.boostai.sdk.ChatBackend.Objects.Response.SDKException
+import no.boostai.sdk.ChatBackend.Objects.Response.SDKSerializationException
+import no.boostai.sdk.ChatBackend.Objects.Response.SourceType
+import no.boostai.sdk.ChatBackend.Objects.Type
+import no.boostai.sdk.ChatBackend.Objects.convertConfig
+import okhttp3.Call
+import okhttp3.Callback
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import java.io.IOException
 import java.lang.ref.WeakReference
 import java.net.URL
-import java.util.*
+import java.util.Arrays
+import java.util.Date
+import java.util.Timer
+import java.util.TimerTask
+import java.util.UUID
 import java.util.concurrent.TimeUnit
-import kotlin.collections.ArrayList
 import kotlin.concurrent.scheduleAtFixedRate
 import kotlin.math.min
 
@@ -80,6 +126,9 @@ object ChatBackend {
 
     /// The endpoint to upload files
     var fileUploadServiceEndpointUrl: String? = null
+
+    /// Should we allow file upload in human chat?
+    var allowHumanChatFileUpload: Boolean = false
 
     /// Sets the Human Chat skill for the conversation
     var skill: String? = null
@@ -399,8 +448,9 @@ object ChatBackend {
     ///
     /// {"command": "POST", "type": "files", "conversation_id": String, "value": [{ "filename": String, "mimetype": String, "url": String}]}
     /// - parameter files: Array of files
-    fun sendFiles(files: List<File>, listener: APIMessageResponseListener? = null) {
-        val message = createPostMessage(Type.FILES)
+    fun sendFiles(files: List<File>, message: String? = null, listener: APIMessageResponseListener? = null) {
+        val postMessage = createPostMessage(Type.FILES)
+        postMessage.message = message
 
         // Hack to fix the fact that the upload service returns "mimeType" while the API endpoint
         // expects "mimetype" (all lowercase)
@@ -408,9 +458,38 @@ object ChatBackend {
             "{\"filename\":\"${it.filename}\", \"mimetype\": \"${it.mimeType}\", \"url\": \"${it.url}\"}"
         }
         val jsonString = "[${jsonFiles.joinToString(", ")}]"
+        postMessage.value = Json.parseToJsonElement(jsonString)
+        send(postMessage, listener)
 
-        message.value = Json.parseToJsonElement(jsonString)
-        send(message, listener)
+        // Store and publish the message sent so it can be rendered in the chatbot UI
+        val fileEnding = if (files.isNotEmpty()) files.first().filename.split(".").last().lowercase() else ""
+        val fileName = "file" + (if (fileEnding.isNotEmpty()) ".$fileEnding" else "")
+        val text = if ((message?.length ?: 0) > 0) message else fileName
+        val uuid = UUID.randomUUID().toString()
+
+        val elements = ArrayList<Element>()
+        elements.add(Element(payload = Payload(text), type = ElementType.HTML))
+
+        val fileLinks: ArrayList<Link> =
+            files.map { Link(id = "", text = it.filename, type = LinkType.EXTERNAL_LINK, url = it.url, isAttachment = true) } as ArrayList<Link>
+
+        if (fileLinks.isNotEmpty()) {
+            elements.add(Element(payload = Payload(links = fileLinks), type = ElementType.LINKS))
+        }
+
+        val apiMessage = APIMessage(
+            response = no.boostai.sdk.ChatBackend.Objects.Response.Response(
+                id = uuid,
+                source = SourceType.CLIENT,
+                language = languageCode,
+                elements = elements,
+                dateCreated = Date(),
+                isTempId = true
+            )
+        )
+
+        messages.add(apiMessage)
+        publishResponse(apiMessage, null)
     }
 
     /// Use this request type to trigger action flow elements directly
@@ -611,6 +690,7 @@ object ChatBackend {
         this.maxInputChars = state.maxInputChars ?: this.maxInputChars
         this.lastResponse = apiMessage
         this.pollValue = apiMessage.response?.id ?: (if (apiMessage.responses?.size ?: 0 > 0) apiMessage.responses?.last()?.id else null) ?: pollValue
+        this.allowHumanChatFileUpload = conversation.state.allowHumanChatFileUpload ?: this.allowHumanChatFileUpload
         this.privacyPolicyUrl = conversation.state.privacyPolicyUrl ?: this.privacyPolicyUrl
 
         // Handling human poll
@@ -648,14 +728,20 @@ object ChatBackend {
         }
     }
 
-    fun uploadFilesToAPI(files: List<java.io.File>) {
-        val endpointURL = fileUploadServiceEndpointUrl ?: return
+    fun uploadFilesToAPI(files: List<FileUpload>, fileExpirationSeconds: Int? = null, listener: APIFileUploadResponseListener? = null) {
+        var endpointURL = fileUploadServiceEndpointUrl ?: return
+
+        fileExpirationSeconds?.let {
+            endpointURL += "?expiry=$it"
+        }
 
         val formBuilder = MultipartBody.Builder()
             .setType(MultipartBody.FORM)
 
-        files.forEach {
-            formBuilder.addFormDataPart("files", it.name, it.asRequestBody("image/jpg".toMediaTypeOrNull()))
+        formBuilder.addFormDataPart("inline_download", "true")
+
+        files.forEach { fileUpload ->
+            formBuilder.addFormDataPart("files", fileUpload.filename, fileUpload.file.asRequestBody(fileUpload.mimeType.toMediaTypeOrNull()))
         }
 
         val b = formBuilder.build()
@@ -677,7 +763,13 @@ object ChatBackend {
 
                     if (response.isSuccessful) {
                         val fileJson = chatbackendJson.decodeFromString<Files>(body)
-                        sendFiles(fileJson.files)
+                        Handler(Looper.getMainLooper()).post {
+                            listener?.onResponse(fileJson.files)
+                        }
+                    } else {
+                        Handler(Looper.getMainLooper()).post {
+                            listener?.onFailure(SDKException("No files found in response"))
+                        }
                     }
                 } catch (e: SerializationException) {
                     e.printStackTrace()
@@ -836,6 +928,11 @@ object ChatBackend {
 
     interface APIMessageResponseHandler {
         fun handleResponse(body: String, listener: APIMessageResponseListener? = null)
+    }
+
+    interface APIFileUploadResponseListener {
+        fun onFailure(exception: Exception)
+        fun onResponse(files: List<File>)
     }
 
     interface SDKObserver {
