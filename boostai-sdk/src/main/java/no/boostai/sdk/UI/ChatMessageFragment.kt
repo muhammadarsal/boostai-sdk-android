@@ -47,8 +47,11 @@ open class ChatMessageFragment(
     var isAwaitingFiles: Boolean = false,
     var avatarUrl: String? = null,
     var customConfig: ChatConfig? = null,
-    var delegate: ChatViewFragmentDelegate? = null
-) : Fragment(R.layout.chat_message), ChatBackend.ConfigObserver {
+    var delegate: ChatViewFragmentDelegate? = null,
+    var buttonDelegate: ChatMessageButtonDelegate? = null
+) : Fragment(R.layout.chat_message),
+    ChatBackend.ConfigObserver,
+    ChatMessageButtonDelegate {
 
     val responseKey = "response"
     val isBlockedKey = "isBlocked"
@@ -258,7 +261,8 @@ open class ChatMessageFragment(
             isBlocked,
             isWelcomeMessage,
             animated,
-            customConfig
+            customConfig,
+            this
         )
     }
 
@@ -282,5 +286,23 @@ open class ChatMessageFragment(
 
     override fun onFailure(backend: ChatBackend, error: Exception) {
         TODO("Not yet implemented")
+    }
+
+    override fun didTapActionButton() {
+        buttonDelegate?.didTapActionButton()
+    }
+
+    override fun disableActionButtons() {
+        for (fragment in childFragmentManager.fragments) {
+            val f = fragment as? ChatMessageButtonDelegate
+            f?.disableActionButtons()
+        }
+    }
+
+    override fun enableActionButtons() {
+        for (fragment in childFragmentManager.fragments) {
+            val f = fragment as? ChatMessageButtonDelegate
+            f?.enableActionButtons()
+        }
     }
 }

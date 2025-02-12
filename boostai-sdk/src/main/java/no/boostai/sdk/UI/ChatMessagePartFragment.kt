@@ -52,8 +52,11 @@ open class ChatMessagePartFragment(
     var isBlocked: Boolean = false,
     var isWelcomeMessage: Boolean = false,
     val animated: Boolean = true,
-    var customConfig: ChatConfig? = null
-) : IChatMessagePartFragment(R.layout.chat_message_part), ChatBackend.ConfigObserver {
+    var customConfig: ChatConfig? = null,
+    var buttonDelegate: ChatMessageButtonDelegate? = null
+) : IChatMessagePartFragment(R.layout.chat_message_part),
+    ChatBackend.ConfigObserver,
+    ChatMessageButtonDelegate {
 
     val elementKey = "element"
     val responseIdKey = "responseId"
@@ -333,7 +336,7 @@ open class ChatMessagePartFragment(
         ChatMessageTextFragment(text, isHtml, isClient, animated, customConfig)
 
     fun getChatMessageButtonsFragment(links: ArrayList<Link>): Fragment =
-        ChatMessageButtonsFragment(links, animated, customConfig)
+        ChatMessageButtonsFragment(links, animated, customConfig, this)
 
     fun getChatMessageImageFragment(url: String): Fragment =
         ChatMessageImageFragment(url, animated)
@@ -352,4 +355,21 @@ open class ChatMessagePartFragment(
     override fun onFailure(backend: ChatBackend, error: Exception) {
     }
 
+    override fun didTapActionButton() {
+        buttonDelegate?.didTapActionButton()
+    }
+
+    override fun disableActionButtons() {
+        for (fragment in childFragmentManager.fragments) {
+            val f = fragment as? ChatMessageButtonDelegate
+            f?.disableActionButtons()
+        }
+    }
+
+    override fun enableActionButtons() {
+        for (fragment in childFragmentManager.fragments) {
+            val f = fragment as? ChatMessageButtonDelegate
+            f?.enableActionButtons()
+        }
+    }
 }

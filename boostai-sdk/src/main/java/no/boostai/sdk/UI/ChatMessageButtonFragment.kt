@@ -20,6 +20,7 @@
 package no.boostai.sdk.UI
 
 import android.app.Activity
+import android.content.DialogInterface.OnClickListener
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.net.Uri
@@ -53,15 +54,18 @@ open class ChatMessageButtonFragment(
     var link: Link? = null,
     var idx: Int = 0,
     val animated: Boolean = true,
-    var customConfig: ChatConfig? = null
+    var customConfig: ChatConfig? = null,
+    var buttonDelegate: ChatMessageButtonDelegate? = null
 ) : Fragment(R.layout.chat_server_message_button),
     ChatBackend.ConfigObserver,
-    Animation.AnimationListener {
+    Animation.AnimationListener,
+    ChatMessageButtonDelegate {
 
     private val FILE_PICKER_REQUEST = 847322
     val ACTION_LINK_UPLOAD = "upload"
     lateinit var textView: TextView
     lateinit var imageView: ImageView
+    lateinit var onClickListener: View.OnClickListener
 
     val linkKey = "link"
     val idxKey = "idx"
@@ -127,7 +131,7 @@ open class ChatMessageButtonFragment(
 
         textView.maxLines = if (multiline) Integer.MAX_VALUE else 1
 
-        view.setOnClickListener {
+        val listener = View.OnClickListener {
             if (link?.id == ACTION_LINK_UPLOAD) {
                 Intent(Intent.ACTION_GET_CONTENT).let { intent ->
                     intent.setType("*/*")
@@ -140,6 +144,8 @@ open class ChatMessageButtonFragment(
                 }
                 BoostUIEvents.notifyObservers(BoostUIEvents.Event.externalLinkClicked, url)
             } ?: link?.let {
+                buttonDelegate?.didTapActionButton()
+
                 ChatBackend.actionButton(it.id)
                 BoostUIEvents.notifyObservers(BoostUIEvents.Event.actionLinkClicked, it.id)
 
@@ -154,6 +160,8 @@ open class ChatMessageButtonFragment(
                 }
             }
         }
+        onClickListener = listener
+        view.setOnClickListener(listener)
 
         view.onFocusChangeListener = View.OnFocusChangeListener { _, hasFocus ->
             val backgroundColor = customConfig?.chatPanel?.styling?.buttons?.backgroundColor
@@ -280,4 +288,15 @@ open class ChatMessageButtonFragment(
     }
     override fun onAnimationRepeat(p0: Animation?) {}
 
+    override fun didTapActionButton() {}
+
+    override fun disableActionButtons() {
+        view?.setOnClickListener(null)
+        view?.background?.alpha = 127
+    }
+
+    override fun enableActionButtons() {
+        view?.setOnClickListener(onClickListener)
+        view?.background?.alpha = 255
+    }
 }

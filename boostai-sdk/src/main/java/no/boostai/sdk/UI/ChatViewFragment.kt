@@ -77,7 +77,9 @@ open class ChatViewFragment(
     Fragment(R.layout.chat_view),
     ChatBackend.MessageObserver,
     ChatBackend.ConfigObserver,
-    ChatViewSettingsDelegate, FileUploadFragment.FileUploadFragmentDelegate {
+    ChatViewSettingsDelegate,
+    FileUploadFragment.FileUploadFragmentDelegate,
+    ChatMessageButtonDelegate {
 
     private val FILE_PICKER_REQUEST = 847321
 
@@ -528,6 +530,7 @@ open class ChatViewFragment(
 
         hideStatusMessage()
         updateTranslatedMessages()
+        enableActionButtons()
 
         // Show human typing indicator if applicable
         if (message.conversation?.state?.humanIsTyping == true) {
@@ -1235,7 +1238,8 @@ open class ChatViewFragment(
         isAwaitingFiles,
         avatarUrl = lastAvatarURL,
         customConfig = customConfig,
-        delegate
+        delegate,
+        buttonDelegate = this
     )
 
     fun getHumanTypingFragment(): Fragment = ChatHumanTypingFragment()
@@ -1314,5 +1318,23 @@ open class ChatViewFragment(
         }
 
         super.onActivityResult(requestCode, resultCode, data)
+    }
+
+    override fun didTapActionButton() {
+        disableActionButtons()
+    }
+
+    override fun disableActionButtons() {
+        for (fragment in childFragmentManager.fragments) {
+            val f = fragment as? ChatMessageButtonDelegate
+            f?.disableActionButtons()
+        }
+    }
+
+    override fun enableActionButtons() {
+        for (fragment in childFragmentManager.fragments) {
+            val f = fragment as? ChatMessageButtonDelegate
+            f?.enableActionButtons()
+        }
     }
 }

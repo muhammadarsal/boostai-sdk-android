@@ -30,8 +30,10 @@ import no.boostai.sdk.R
 open class ChatMessageButtonsFragment(
     var links: ArrayList<Link>? = null,
     val animated: Boolean = true,
-    var customConfig: ChatConfig? = null
-) : Fragment(R.layout.chat_server_message_buttons) {
+    var customConfig: ChatConfig? = null,
+    var buttonDelegate: ChatMessageButtonDelegate? = null
+) : Fragment(R.layout.chat_server_message_buttons),
+    ChatMessageButtonDelegate {
 
     val linksKey = "links"
     val customConfigKey = "customConfig"
@@ -77,6 +79,23 @@ open class ChatMessageButtonsFragment(
         ChatMessageConsentFragment(links, animated, customConfig)
 
     fun getChatMessageButtonFragment(link: Link, index: Int): Fragment =
-        ChatMessageButtonFragment(link, index, animated, customConfig)
+        ChatMessageButtonFragment(link, index, animated, customConfig, this)
 
+    override fun didTapActionButton() {
+        buttonDelegate?.didTapActionButton()
+    }
+
+    override fun disableActionButtons() {
+        for (fragment in childFragmentManager.fragments) {
+            val f = fragment as? ChatMessageButtonDelegate
+            f?.disableActionButtons()
+        }
+    }
+
+    override fun enableActionButtons() {
+        for (fragment in childFragmentManager.fragments) {
+            val f = fragment as? ChatMessageButtonDelegate
+            f?.enableActionButtons()
+        }
+    }
 }
