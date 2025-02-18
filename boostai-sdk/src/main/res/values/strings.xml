@@ -29,4 +29,5 @@
     <string name="feedback_text_hint">Write in your feedback here</string>
     <string name="unknown_error">An unknown error occurred.</string>
     <string name="thanks_for_the_feedback">Thanks for the feedback.\nWe sincerely appreciate your insight, it helps us build a better customer experience.</string>
+    <string name="network_error_message">Could not connect to the chat service.</string>
 </resources>

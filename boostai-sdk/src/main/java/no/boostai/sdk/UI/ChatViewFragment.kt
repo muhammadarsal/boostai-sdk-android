@@ -67,6 +67,9 @@ import no.boostai.sdk.R
 import no.boostai.sdk.UI.Events.BoostUIEvents
 import no.boostai.sdk.UI.Helpers.TimingHelper
 import java.io.FileOutputStream
+import java.net.ConnectException
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
 import java.util.UUID
 
 open class ChatViewFragment(
@@ -313,7 +316,16 @@ open class ChatViewFragment(
         // Set up listener
         ChatBackend.onReady(object : ChatBackend.ConfigReadyListener {
             override fun onFailure(exception: Exception) {
-                showStatusMessage(exception.localizedMessage ?: "An unknown error occured", true)
+                var message = exception.localizedMessage ?: "An unknown error occured"
+                when (exception) {
+                    is UnknownHostException,
+                    is SocketTimeoutException,
+                    is ConnectException -> {
+                        message = getString(R.string.network_error_message)
+                    }
+                }
+
+                showStatusMessage(message, true)
             }
 
             override fun onReady(config: ChatConfig) {
