@@ -325,8 +325,8 @@ open class ChatMessagePartFragment(
         }
 
         val messageThumbsDown = customConfig?.messages?.get(ChatBackend.languageCode)?.messageThumbsDown
-            ?: ChatBackend.customConfig?.messages?.get(ChatBackend.languageCode)?.messageThumbsUp
-            ?: ChatBackend.config?.messages?.get(ChatBackend.languageCode)?.messageThumbsUp
+            ?: ChatBackend.customConfig?.messages?.get(ChatBackend.languageCode)?.messageThumbsDown
+            ?: ChatBackend.config?.messages?.get(ChatBackend.languageCode)?.messageThumbsDown
         messageThumbsDown?.let {
             negativeMessageFeedbackButton?.contentDescription = it
         }
