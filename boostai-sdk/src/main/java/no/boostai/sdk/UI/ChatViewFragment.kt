@@ -866,7 +866,9 @@ open class ChatViewFragment(
         // Remove existing file upload fragments
         val transaction = childFragmentManager.beginTransaction()
         for (fragment in pendingFileUploadFragments) {
-            transaction.remove(fragment)
+            if (fragment.isAdded) {
+                transaction.remove(fragment)
+            }
         }
         transaction.commitAllowingStateLoss()
         pendingFileUploadFragments = ArrayList()
@@ -945,7 +947,9 @@ open class ChatViewFragment(
         val transaction = childFragmentManager.beginTransaction()
         waitingForAgentResponseFragmentTags.forEach { tag ->
             childFragmentManager.findFragmentByTag(tag)?.let {
-                transaction.remove(it)
+                if (it.isAdded) {
+                    transaction.remove(it)
+                }
             }
         }
         waitingForAgentResponseFragmentTags.clear()
@@ -1108,7 +1112,7 @@ open class ChatViewFragment(
                 responses.forEach {
                     val fragment = childFragmentManager.findFragmentByTag(it.id)
 
-                    if (fragment != null) transaction.remove(fragment)
+                    if (fragment != null && fragment.isAdded) transaction.remove(fragment)
                 }
                 transaction.commitAllowingStateLoss()
                 // Empty the responses list
