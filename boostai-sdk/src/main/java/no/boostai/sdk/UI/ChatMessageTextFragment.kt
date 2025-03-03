@@ -19,6 +19,7 @@
 
 package no.boostai.sdk.UI
 
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.net.Uri
@@ -28,6 +29,7 @@ import android.util.Patterns
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.annotation.ColorInt
 import androidx.annotation.FontRes
 import androidx.core.content.ContextCompat
@@ -126,9 +128,13 @@ open class ChatMessageTextFragment(
                         ChatBackend.userActionMessage(text)
                     }
                 } else {
-                    Intent(Intent.ACTION_VIEW).let {
-                        it.setData(Uri.parse(url))
-                        startActivity(it)
+                    try {
+                        Intent(Intent.ACTION_VIEW).let {
+                            it.setData(Uri.parse(url))
+                            startActivity(it)
+                        }
+                    } catch (e: ActivityNotFoundException) {
+                        Toast.makeText(requireContext(), R.string.network_error_message, Toast.LENGTH_SHORT).show()
                     }
 
                     BoostUIEvents.notifyObservers(BoostUIEvents.Event.externalLinkClicked, url)
