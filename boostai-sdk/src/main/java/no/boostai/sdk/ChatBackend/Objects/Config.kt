@@ -300,6 +300,9 @@ data class Styling (
     /// Avatar shape. Valid values: ROUNDED, SQUARED
     val avatarShape: AvatarShape? = null,
 
+    /// Hide the avatar if needed
+    val hideAvatar: Boolean? = null,
+
     /// Color for header bar and menu background.
     @Serializable(with = HexColorSerializer::class)
     @ColorInt val primaryColor: Int? = null,

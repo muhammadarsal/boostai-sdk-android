@@ -62,7 +62,7 @@ open class ChatMessageFragment(
     val customConfigKey = "customConfig"
     val delegateKey = "delegate"
 
-    lateinit var imageView: ImageView
+    lateinit var avatarImageView: ImageView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -95,21 +95,27 @@ open class ChatMessageFragment(
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        imageView = view.findViewById(R.id.avatar)
+        avatarImageView = view.findViewById(R.id.avatar)
+
+        val hideAvatar = customConfig?.chatPanel?.styling?.hideAvatar
+            ?: ChatBackend.customConfig?.chatPanel?.styling?.hideAvatar
+            ?: ChatBackend.config?.chatPanel?.styling?.hideAvatar
+            ?: false
+
+        avatarImageView.visibility = if (isClient || hideAvatar) View.GONE else View.VISIBLE
 
         if (isClient) {
-            imageView.visibility = View.GONE
             val layoutParams = view.layoutParams as LinearLayout.LayoutParams
             layoutParams.width = resources.getDimensionPixelSize(R.dimen.chat_view_part_min_width)
             layoutParams.gravity = Gravity.RIGHT
             view.layoutParams = layoutParams
         } else {
-            imageView.clipToOutline = true
+            avatarImageView.clipToOutline = true
 
             response?.avatarUrl?.let { avatarUrl ->
-                Glide.with(this).load(avatarUrl).into(imageView)
+                Glide.with(this).load(avatarUrl).into(avatarImageView)
             } ?: avatarUrl?.let { avatarUrl ->
-                Glide.with(this).load(avatarUrl).into(imageView)
+                Glide.with(this).load(avatarUrl).into(avatarImageView)
             }
         }
 
@@ -276,7 +282,7 @@ open class ChatMessageFragment(
                 ?: ChatBackend.customConfig?.chatPanel?.styling?.avatarShape
                 ?: config.chatPanel?.styling?.avatarShape
                 ?: ChatPanelDefaults.Styling.avatarShape
-            imageView.background = if (avatarShape == AvatarShape.SQUARED) null else ContextCompat.getDrawable(requireContext(), R.drawable.rounded)
+            avatarImageView.background = if (avatarShape == AvatarShape.SQUARED) null else ContextCompat.getDrawable(requireContext(), R.drawable.rounded)
         }
     }
 
