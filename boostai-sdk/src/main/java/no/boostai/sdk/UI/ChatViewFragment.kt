@@ -1066,7 +1066,18 @@ open class ChatViewFragment(
         // Only show the filter selector if we have any filters
         filterItem.isVisible = (filterMenu?.size() ?: 0) > 0
 
-        minimizeItem.isVisible = isDialog
+        val hideMinimizeButton = customConfig?.chatPanel?.header?.hideMinimizeButton
+            ?: ChatBackend.config?.chatPanel?.header?.hideMinimizeButton
+            ?: ChatBackend.customConfig?.chatPanel?.header?.hideMinimizeButton
+            ?: false
+
+        val hideMenuButton = customConfig?.chatPanel?.header?.hideMenuButton
+            ?: ChatBackend.config?.chatPanel?.header?.hideMenuButton
+            ?: ChatBackend.customConfig?.chatPanel?.header?.hideMenuButton
+            ?: false
+
+        minimizeItem.isVisible = isDialog && !hideMinimizeButton
+        settingsItem.isVisible = !hideMenuButton
         closeItem.isVisible = isDialog
 
         super.onCreateOptionsMenu(menu, inflater)

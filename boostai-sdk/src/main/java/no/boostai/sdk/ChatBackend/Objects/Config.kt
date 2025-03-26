@@ -263,8 +263,11 @@ data class Header (
     /// Will override the value from the Admin Panel.
     val title: String? = null,
 
-    /// When to show the minimize button
-    //val showMinimizeButton: MinimizeButtonOptions? = null,
+    /// Should we hide the minimize button?
+    val hideMinimizeButton: Boolean? = null,
+
+    /// Should we hide the menu button?
+    val hideMenuButton: Boolean? = null,
 ) : Parcelable
 
 /*
