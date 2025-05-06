@@ -21,6 +21,7 @@ package no.boostai.sdk.UI
 
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
+import android.text.Html
 import android.view.View
 import androidx.annotation.ColorInt
 import androidx.appcompat.app.AppCompatActivity
@@ -89,6 +90,11 @@ open class ChatViewActivity: AppCompatActivity(R.layout.chat_view_activity), Cha
             ?: config.chatPanel?.styling?.primaryColor
             ?: ContextCompat.getColor(this, R.color.primaryColor)
 
+        @ColorInt val contrastColor = customConfig?.chatPanel?.styling?.contrastColor
+            ?: ChatBackend.customConfig?.chatPanel?.styling?.contrastColor
+            ?: config.chatPanel?.styling?.contrastColor
+            ?: ContextCompat.getColor(this, R.color.contrastColor)
+
         supportActionBar?.setBackgroundDrawable(ColorDrawable(primaryColor))
 
         val title = customConfig?.chatPanel?.header?.title
@@ -96,7 +102,8 @@ open class ChatViewActivity: AppCompatActivity(R.layout.chat_view_activity), Cha
             ?: customConfig?.messages?.get(ChatBackend.languageCode)?.headerText
             ?: ChatBackend.customConfig?.messages?.get(ChatBackend.languageCode)?.headerText
             ?: config.messages?.get(ChatBackend.languageCode)?.headerText
-        supportActionBar?.title = title
+        supportActionBar?.title =
+            Html.fromHtml("<font color=\"#" + Integer.toHexString(contrastColor).substring(2) + "\">" + title + "</font>")
         supportActionBar?.setDisplayShowTitleEnabled(title != null)
     }
 
