@@ -71,6 +71,8 @@ class MainActivity : AppCompatActivity(R.layout.activity_main),
             )
         )
 
+        ChatBackend.customConfig = customConfig
+
         toolbar = findViewById(R.id.toolbar)
         viewPager = findViewById(R.id.view_pager)
         tabLayout = findViewById(R.id.tab_layout)
@@ -81,12 +83,12 @@ class MainActivity : AppCompatActivity(R.layout.activity_main),
         val adapter = ViewPagerAdapter(supportFragmentManager)
 
         adapter.addFragment(
-            ChatViewFragment(customConfig = customConfig),
+            ChatViewFragment(),
             getString(R.string.fullscreen)
         )
 
         adapter.addFragment(
-            FloatingAvatarFragment(customConfig = customConfig),
+            FloatingAvatarFragment(),
             getString(R.string.avatar)
         )
 

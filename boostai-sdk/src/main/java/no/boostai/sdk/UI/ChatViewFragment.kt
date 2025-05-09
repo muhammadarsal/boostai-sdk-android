@@ -726,6 +726,8 @@ open class ChatViewFragment(
 
         if (ChatBackend.customPayload == null) {
             ChatBackend.customPayload = customConfig?.chatPanel?.settings?.customPayload
+                ?: ChatBackend.customConfig?.chatPanel?.settings?.customPayload
+                ?: config?.chatPanel?.settings?.customPayload
         }
     }
 
