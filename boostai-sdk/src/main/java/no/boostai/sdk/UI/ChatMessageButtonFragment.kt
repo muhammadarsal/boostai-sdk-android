@@ -138,10 +138,10 @@ open class ChatMessageButtonFragment(
                     startActivityForResult(intent, FILE_PICKER_REQUEST);
                 }
             } else link?.url?.let { url ->
-                Intent(Intent.ACTION_VIEW).let {
-                    it.data = Uri.parse(url)
-                    startActivity(it)
-                }
+                // Intent(Intent.ACTION_VIEW).let {
+                //     it.data = Uri.parse(url)
+                //     startActivity(it)
+                // }
                 BoostUIEvents.notifyObservers(BoostUIEvents.Event.externalLinkClicked, url)
             } ?: link?.let {
                 buttonDelegate?.didTapActionButton()
